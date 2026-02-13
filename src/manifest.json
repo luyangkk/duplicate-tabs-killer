@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "Duplicate Tabs Killer",
+  "version": "1.0.0",
+  "description": "Automatically detect and close duplicate tabs, group and archive tabs.",
+  "permissions": [
+    "tabs",
+    "storage",
+    "activeTab",
+    "contextMenus",
+    "favicon"
+  ],
+  "host_permissions": [
+    "http://*/*",
+    "https://*/*"
+  ],
+  "action": {
+    "default_popup": "src/popup/index.html"
+  },
+  "background": {
+    "service_worker": "src/background/index.ts",
+    "type": "module"
+  },
+  "options_page": "src/dashboard/index.html"
+}
