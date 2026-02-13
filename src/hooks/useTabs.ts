@@ -41,6 +41,23 @@ export const useTabs = () => {
     };
   }, [fetchTabs]);
 
+  const closeDuplicateGroup = async (group: DuplicateGroup) => {
+    const tabsToClose: number[] = [];
+    // Keep the active tab if present, otherwise the first one
+    const activeTab = group.tabs.find(t => t.active);
+    const tabToKeep = activeTab || group.tabs[0];
+    
+    group.tabs.forEach(tab => {
+      if (tab.id !== tabToKeep.id) {
+        tabsToClose.push(tab.id);
+      }
+    });
+
+    if (tabsToClose.length > 0) {
+      await closeTabs(tabsToClose);
+    }
+  };
+
   const closeDuplicateTabs = async () => {
     const tabsToClose: number[] = [];
     duplicates.forEach(group => {
@@ -66,6 +83,7 @@ export const useTabs = () => {
     duplicates,
     loading,
     refresh: fetchTabs,
-    closeDuplicateTabs
+    closeDuplicateTabs,
+    closeDuplicateGroup
   };
 };
