@@ -6,7 +6,7 @@ import { LayoutGrid, Archive as ArchiveIcon, Search, Globe, Trash2, RotateCcw, P
 import { TabInfo } from '@/utils/tabs';
 
 function App() {
-  const { tabs, loading: tabsLoading } = useTabs();
+  const { tabs, loading: tabsLoading, removeTab } = useTabs();
   const { archives, loading: archivesLoading, addArchive, removeArchive, restore } = useArchives();
   
   const [activeTab, setActiveTab] = useState<'current' | 'archives'>('current');
@@ -34,6 +34,15 @@ function App() {
     setArchiveName('');
     setIsArchiveModalOpen(false);
     setActiveTab('archives');
+  };
+
+  const handleJumpToTab = async (tab: TabInfo) => {
+    if (tab.id) {
+        await chrome.tabs.update(tab.id, { active: true });
+    }
+    if (tab.windowId) {
+        await chrome.windows.update(tab.windowId, { focused: true });
+    }
   };
 
   return (
@@ -136,11 +145,27 @@ function App() {
                             </div>
                             <div className="max-h-[300px] overflow-y-auto p-2">
                                 {group.tabs.map(tab => (
-                                    <div key={tab.id} className="p-2 hover:bg-gray-50 rounded group flex items-start gap-2 text-sm">
-                                        <div className="mt-1 w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0" />
-                                        <a href={tab.url} target="_blank" rel="noreferrer" className="text-gray-600 hover:text-blue-600 truncate block flex-1" title={tab.title}>
-                                            {tab.title}
-                                        </a>
+                                    <div key={tab.id} className="p-2 hover:bg-gray-50 rounded group flex items-center justify-between gap-2 text-sm transition-colors">
+                                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0" />
+                                            <div 
+                                                onClick={() => handleJumpToTab(tab)}
+                                                className="text-gray-600 hover:text-blue-600 truncate cursor-pointer transition-colors"
+                                                title={tab.title}
+                                            >
+                                                {tab.title}
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (removeTab) removeTab(tab.id);
+                                            }}
+                                            className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-all p-1 rounded hover:bg-red-50 shrink-0"
+                                            title="Close Tab"
+                                        >
+                                            <X className="w-3 h-3" />
+                                        </button>
                                     </div>
                                 ))}
                             </div>

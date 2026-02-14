@@ -78,12 +78,17 @@ export const useTabs = () => {
     }
   };
 
+  const removeTab = async (tabId: number) => {
+    await closeTabs([tabId]);
+  };
+
   return {
     tabs,
     duplicates,
     loading,
     refresh: fetchTabs,
     closeDuplicateTabs,
-    closeDuplicateGroup
+    closeDuplicateGroup,
+    removeTab
   };
 };
