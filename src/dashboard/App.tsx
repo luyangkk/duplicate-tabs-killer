@@ -1,18 +1,71 @@
 import React, { useState, useMemo } from 'react';
 import { useTabs } from '@/hooks/useTabs';
 import { useArchives } from '@/hooks/useArchives';
+import { useTabPreview } from '@/hooks/useTabPreview';
+import { Settings } from './Settings';
 import { groupTabsByDomain } from '@/utils/grouping';
-import { LayoutGrid, Archive as ArchiveIcon, Search, Globe, Trash2, RotateCcw, Plus, X } from 'lucide-react';
+import { LayoutGrid, Archive as ArchiveIcon, Search, Globe, Trash2, RotateCcw, Plus, X, Settings as SettingsIcon } from 'lucide-react';
 import { TabInfo } from '@/utils/tabs';
+
+const PreviewTooltip = ({ url, x, y }: { url: string | null, x: number, y: number }) => {
+  const { preview, loading } = useTabPreview(url || undefined);
+  
+  if (!url) return null;
+
+  // Calculate position to keep within viewport
+  // Simple check to prevent overflow on right/bottom
+  const style: React.CSSProperties = {
+      left: x + 20,
+      top: y + 10,
+      maxWidth: '320px'
+  };
+
+  // Adjust if too close to right edge
+  if (x > window.innerWidth - 350) {
+      style.left = 'auto';
+      style.right = window.innerWidth - x + 20;
+  }
+  
+  // Adjust if too close to bottom
+  if (y > window.innerHeight - 250) {
+      style.top = 'auto';
+      style.bottom = window.innerHeight - y + 10;
+  }
+
+  return (
+    <div 
+        className="fixed z-50 bg-white p-2 rounded-lg shadow-xl border border-gray-200 pointer-events-none transition-all duration-200 animate-in fade-in zoom-in-95"
+        style={style}
+    >
+        {loading ? (
+            <div className="w-64 h-40 bg-gray-100 animate-pulse rounded flex items-center justify-center text-gray-400 text-sm">
+                Loading...
+            </div>
+        ) : preview ? (
+            <div className="space-y-2">
+                <img src={preview} alt="Preview" className="w-64 h-auto rounded shadow-sm border border-gray-100 object-cover bg-gray-50" />
+            </div>
+        ) : (
+            <div className="w-64 h-32 bg-gray-50 rounded flex flex-col items-center justify-center text-gray-400 text-xs text-center p-4 border border-dashed border-gray-200">
+                <Globe className="w-8 h-8 mb-2 opacity-50" />
+                <span>No preview available yet</span>
+                <span className="text-[10px] mt-1 opacity-75">Activate tab to generate preview</span>
+            </div>
+        )}
+    </div>
+  );
+};
 
 function App() {
   const { tabs, loading: tabsLoading, removeTab } = useTabs();
   const { archives, loading: archivesLoading, addArchive, removeArchive, restore } = useArchives();
   
-  const [activeTab, setActiveTab] = useState<'current' | 'archives'>('current');
+  const [activeTab, setActiveTab] = useState<'current' | 'archives' | 'settings'>('current');
   const [searchQuery, setSearchQuery] = useState('');
   const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
   const [archiveName, setArchiveName] = useState('');
+  
+  const [hoveredTab, setHoveredTab] = useState<{ url: string, x: number, y: number } | null>(null);
 
   const domainGroups = useMemo(() => {
     const filteredTabs = tabs.filter(t => 
@@ -85,6 +138,17 @@ function App() {
                     {archives.length}
                 </span>
             </button>
+            <button
+                onClick={() => setActiveTab('settings')}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+                    activeTab === 'settings' 
+                        ? 'bg-blue-50 text-blue-700' 
+                        : 'text-gray-600 hover:bg-gray-100'
+                }`}
+            >
+                <SettingsIcon className="w-5 h-5" />
+                Settings
+            </button>
         </nav>
       </div>
 
@@ -94,9 +158,10 @@ function App() {
             {/* Header */}
             <div className="flex justify-between items-center mb-8">
                 <h2 className="text-2xl font-bold text-gray-900">
-                    {activeTab === 'current' ? 'Current Session' : 'Saved Archives'}
+                    {activeTab === 'current' ? 'Current Session' : activeTab === 'archives' ? 'Saved Archives' : 'Settings'}
                 </h2>
                 
+                {activeTab !== 'settings' && (
                 <div className="flex items-center gap-4">
                     <div className="relative">
                         <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -119,10 +184,13 @@ function App() {
                         </button>
                     )}
                 </div>
+                )}
             </div>
 
             {/* Content */}
-            {activeTab === 'current' ? (
+            {activeTab === 'settings' ? (
+                <Settings />
+            ) : activeTab === 'current' ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {tabsLoading ? (
                         <p className="text-gray-500">Loading tabs...</p>
@@ -145,7 +213,19 @@ function App() {
                             </div>
                             <div className="max-h-[300px] overflow-y-auto p-2">
                                 {group.tabs.map(tab => (
-                                    <div key={tab.id} className="p-2 hover:bg-gray-50 rounded group flex items-center justify-between gap-2 text-sm transition-colors">
+                                    <div 
+                                        key={tab.id} 
+                                        className="p-2 hover:bg-gray-50 rounded group flex items-center justify-between gap-2 text-sm transition-colors relative"
+                                        onMouseEnter={(e) => {
+                                            const rect = e.currentTarget.getBoundingClientRect();
+                                            setHoveredTab({
+                                                url: tab.url,
+                                                x: rect.right,
+                                                y: rect.top
+                                            });
+                                        }}
+                                        onMouseLeave={() => setHoveredTab(null)}
+                                    >
                                         <div className="flex items-center gap-2 flex-1 min-w-0">
                                             <div className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0" />
                                             <div 
@@ -279,6 +359,15 @@ function App() {
                 </div>
             </div>
         </div>
+      )}
+
+      {/* Tab Preview Tooltip */}
+      {hoveredTab && (
+          <PreviewTooltip 
+              url={hoveredTab.url} 
+              x={hoveredTab.x} 
+              y={hoveredTab.y} 
+          />
       )}
     </div>
   );
