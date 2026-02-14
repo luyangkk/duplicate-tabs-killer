@@ -1,14 +1,24 @@
 import React from 'react';
 import { useTabs } from '@/hooks/useTabs';
-import { Trash2, Copy, LayoutDashboard } from 'lucide-react';
+import { TabInfo } from '@/utils/tabs';
+import { Trash2, Copy, LayoutDashboard, ExternalLink } from 'lucide-react';
 
 function App() {
-  const { tabs, duplicates, loading, closeDuplicateTabs } = useTabs();
+  const { tabs, duplicates, loading, closeDuplicateTabs, closeDuplicateGroup } = useTabs();
 
   const totalDuplicates = duplicates.reduce((acc, group) => acc + group.tabs.length - 1, 0);
 
   const handleOpenDashboard = () => {
     chrome.tabs.create({ url: 'src/dashboard/index.html' });
+  };
+
+  const handleJumpToTab = async (tab: TabInfo) => {
+    if (tab.id) {
+        await chrome.tabs.update(tab.id, { active: true });
+    }
+    if (tab.windowId) {
+        await chrome.windows.update(tab.windowId, { focused: true });
+    }
   };
 
   return (
@@ -85,10 +95,34 @@ function App() {
                             <div className="text-xs text-gray-400 truncate mb-2" title={group.url}>
                                 {group.url}
                             </div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center justify-between mb-2">
                                 <span className="bg-red-50 text-red-600 px-2 py-0.5 rounded text-xs font-medium">
                                     {group.tabs.length} copies
                                 </span>
+                                <button 
+                                    onClick={() => closeDuplicateGroup(group)}
+                                    className="text-gray-400 hover:text-red-600 p-1 rounded hover:bg-red-50 transition-colors"
+                                    title="Close duplicate tabs in this group"
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                </button>
+                            </div>
+                            <div className="space-y-1">
+                                {group.tabs.map((tab) => (
+                                    <div 
+                                        key={tab.id} 
+                                        onClick={() => handleJumpToTab(tab)}
+                                        className="flex justify-between items-center text-xs p-1.5 rounded hover:bg-gray-50 border border-transparent hover:border-gray-100 transition-colors group/item cursor-pointer"
+                                        title="Click to jump to tab"
+                                    >
+                                        <span className={`truncate ${tab.active ? 'text-blue-600 font-medium' : 'text-gray-500'}`}>
+                                            Tab #{tab.id}
+                                        </span>
+                                        <div className="text-gray-400 hover:text-blue-600 p-1 rounded hover:bg-blue-50 transition-all opacity-0 group-hover/item:opacity-100">
+                                            <ExternalLink className="w-3 h-3" />
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     ))}

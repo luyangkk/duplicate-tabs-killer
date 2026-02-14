@@ -7,12 +7,12 @@
     "tabs",
     "storage",
     "activeTab",
+    "unlimitedStorage",
     "contextMenus",
     "favicon"
   ],
   "host_permissions": [
-    "http://*/*",
-    "https://*/*"
+    "<all_urls>"
   ],
   "action": {
     "default_popup": "src/popup/index.html"
