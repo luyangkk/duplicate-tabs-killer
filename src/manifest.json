@@ -9,7 +9,8 @@
     "activeTab",
     "unlimitedStorage",
     "contextMenus",
-    "favicon"
+    "favicon",
+    "alarms"
   ],
   "host_permissions": [
     "<all_urls>"

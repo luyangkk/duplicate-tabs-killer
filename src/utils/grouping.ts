@@ -34,5 +34,12 @@ export const groupTabsByDomain = (tabs: TabInfo[]): DomainGroup[] => {
     }
   });
 
-  return Object.values(groups).sort((a, b) => b.tabs.length - a.tabs.length);
+  const result = Object.values(groups);
+
+  // Sort tabs within each domain by most recently accessed
+  result.forEach(group => {
+    group.tabs.sort((a, b) => (b.lastAccessed ?? 0) - (a.lastAccessed ?? 0));
+  });
+
+  return result.sort((a, b) => b.tabs.length - a.tabs.length);
 };
