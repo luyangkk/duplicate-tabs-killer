@@ -1,0 +1,35 @@
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+
+  <!-- Background -->
+  <rect width="128" height="128" rx="22" fill="#EFF6FF"/>
+
+  <!-- ── Duplicate tab (back / lighter) ─────────────────────────────── -->
+  <!-- Tab handle (ear) -->
+  <rect x="30" y="34" width="26" height="14" rx="4" fill="#BFDBFE"/>
+  <!-- Connect handle → body (no visible gap) -->
+  <rect x="30" y="44" width="26" height="5"  fill="#BFDBFE"/>
+  <!-- Tab body -->
+  <rect x="30" y="46" width="66" height="48" rx="7" fill="#BFDBFE"/>
+
+  <!-- ── Main tab (front / vivid blue) ──────────────────────────────── -->
+  <!-- Tab handle (ear) -->
+  <rect x="20" y="28" width="30" height="15" rx="5" fill="#3B82F6"/>
+  <!-- Connect handle → body -->
+  <rect x="20" y="40" width="30" height="5"  fill="#3B82F6"/>
+  <!-- Tab body -->
+  <rect x="20" y="42" width="74" height="50" rx="7" fill="#3B82F6"/>
+  <!-- Subtle address-bar separator inside the tab -->
+  <rect x="20" y="55" width="74" height="2"  fill="#FFFFFF" opacity="0.22"/>
+  <!-- Two short content lines (conveys "real page content") -->
+  <rect x="30" y="64" width="44" height="5"  rx="2.5" fill="#FFFFFF" opacity="0.35"/>
+  <rect x="30" y="75" width="28" height="5"  rx="2.5" fill="#FFFFFF" opacity="0.22"/>
+
+  <!-- ── Kill badge ──────────────────────────────────────────────────── -->
+  <circle cx="90" cy="83" r="19" fill="#EF4444"/>
+  <!-- Subtle inner ring for depth -->
+  <circle cx="90" cy="83" r="19" fill="none" stroke="#FFFFFF" stroke-width="1.5" opacity="0.25"/>
+  <!-- White × -->
+  <path d="M83 76 L97 90 M97 76 L83 90"
+        stroke="#FFFFFF" stroke-width="4" stroke-linecap="round"/>
+
+</svg>

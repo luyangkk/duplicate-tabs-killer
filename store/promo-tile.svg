@@ -1,0 +1,91 @@
+<svg width="440" height="280" viewBox="0 0 440 280" fill="none" xmlns="http://www.w3.org/2000/svg">
+
+  <defs>
+    <!-- Very subtle gradient background -->
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="440" y2="280" gradientUnits="userSpaceOnUse">
+      <stop offset="0%"   stop-color="#F0F7FF"/>
+      <stop offset="100%" stop-color="#E8F0FE"/>
+    </linearGradient>
+    <!-- Soft blue glow behind icon -->
+    <radialGradient id="iconGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%"   stop-color="#3B82F6" stop-opacity="0.10"/>
+      <stop offset="100%" stop-color="#3B82F6" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="440" height="280" fill="url(#bgGrad)"/>
+
+  <!-- Decorative soft circles -->
+  <circle cx="0"   cy="0"   r="160" fill="#3B82F6" opacity="0.04"/>
+  <circle cx="440" cy="280" r="180" fill="#3B82F6" opacity="0.05"/>
+
+  <!-- ── Icon area (left, scaled 1.28× so 128→164px, centred vertically) ── -->
+  <rect x="12" y="58" width="164" height="164" rx="28" fill="url(#iconGlow)"/>
+
+  <g transform="translate(12,58) scale(1.28125)">
+    <!-- Background -->
+    <rect width="128" height="128" rx="22" fill="#EFF6FF"/>
+    <!-- Drop shadow effect via a rect -->
+    <rect width="128" height="128" rx="22" fill="none" stroke="#BFDBFE" stroke-width="1.5" opacity="0.6"/>
+
+    <!-- Duplicate tab (back) -->
+    <rect x="30" y="34" width="26" height="14" rx="4" fill="#BFDBFE"/>
+    <rect x="30" y="44" width="26" height="5"  fill="#BFDBFE"/>
+    <rect x="30" y="46" width="66" height="48" rx="7" fill="#BFDBFE"/>
+
+    <!-- Main tab (front) -->
+    <rect x="20" y="28" width="30" height="15" rx="5" fill="#3B82F6"/>
+    <rect x="20" y="40" width="30" height="5"  fill="#3B82F6"/>
+    <rect x="20" y="42" width="74" height="50" rx="7" fill="#3B82F6"/>
+    <rect x="20" y="55" width="74" height="2"  fill="#FFFFFF" opacity="0.22"/>
+    <rect x="30" y="64" width="44" height="5"  rx="2.5" fill="#FFFFFF" opacity="0.35"/>
+    <rect x="30" y="75" width="28" height="5"  rx="2.5" fill="#FFFFFF" opacity="0.22"/>
+
+    <!-- Kill badge -->
+    <circle cx="90" cy="83" r="19" fill="#EF4444"/>
+    <circle cx="90" cy="83" r="19" fill="none" stroke="#FFFFFF" stroke-width="1.5" opacity="0.25"/>
+    <path d="M83 76 L97 90 M97 76 L83 90"
+          stroke="#FFFFFF" stroke-width="4" stroke-linecap="round"/>
+  </g>
+
+  <!-- Vertical divider -->
+  <line x1="200" y1="48" x2="200" y2="232" stroke="#DBEAFE" stroke-width="1.5"/>
+
+  <!-- ── Text (right) ──────────────────────────────────────────────── -->
+
+  <!-- App name -->
+  <text x="220" y="118"
+    fill="#1E3A8A"
+    font-family="Helvetica Neue, Arial, sans-serif"
+    font-size="21" font-weight="700" letter-spacing="-0.4">Duplicate Tabs Killer</text>
+
+  <!-- Tagline -->
+  <text x="220" y="142"
+    fill="#2563EB"
+    font-family="PingFang SC, Noto Sans CJK SC, Helvetica Neue, Arial, sans-serif"
+    font-size="13">自动检测并关闭重复标签页</text>
+
+  <!-- Divider under tagline -->
+  <line x1="220" y1="156" x2="418" y2="156" stroke="#DBEAFE" stroke-width="1"/>
+
+  <!-- Feature list -->
+  <circle cx="229" cy="175" r="3.5" fill="#3B82F6" opacity="0.75"/>
+  <text x="241" y="180"
+    fill="#475569"
+    font-family="PingFang SC, Noto Sans CJK SC, Helvetica Neue, Arial, sans-serif"
+    font-size="12.5">智能识别并自动关闭重复标签</text>
+
+  <circle cx="229" cy="200" r="3.5" fill="#3B82F6" opacity="0.75"/>
+  <text x="241" y="205"
+    fill="#475569"
+    font-family="PingFang SC, Noto Sans CJK SC, Helvetica Neue, Arial, sans-serif"
+    font-size="12.5">支持标签分组与归档管理</text>
+
+  <circle cx="229" cy="225" r="3.5" fill="#3B82F6" opacity="0.75"/>
+  <text x="241" y="230"
+    fill="#475569"
+    font-family="PingFang SC, Noto Sans CJK SC, Helvetica Neue, Arial, sans-serif"
+    font-size="12.5">轻量运行，不影响浏览器性能</text>
+
+</svg>
