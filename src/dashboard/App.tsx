@@ -4,7 +4,7 @@ import { useArchives } from '@/hooks/useArchives';
 import { useTabPreview } from '@/hooks/useTabPreview';
 import { Settings } from './Settings';
 import { groupTabsByDomain, DomainGroup } from '@/utils/grouping';
-import { LayoutGrid, Archive as ArchiveIcon, Search, Globe, Trash2, RotateCcw, Plus, X, Settings as SettingsIcon, Images } from 'lucide-react';
+import { LayoutGrid, Archive as ArchiveIcon, Search, Globe, Trash2, RotateCcw, Plus, X, Settings as SettingsIcon, Images, Copy } from 'lucide-react';
 import { TabInfo } from '@/utils/tabs';
 import { DomainPreviewModal } from '@/components/DomainPreviewModal';
 
@@ -115,7 +115,7 @@ function App() {
       <div className="fixed inset-y-0 left-0 w-64 bg-white border-r border-gray-200 flex flex-col z-20">
         <div className="p-6 border-b border-gray-100">
             <h1 className="text-xl font-bold text-blue-600 flex items-center gap-2">
-                <LayoutGrid className="w-6 h-6" />
+                <Copy className="w-6 h-6" />
                 Tab Killer
             </h1>
         </div>
