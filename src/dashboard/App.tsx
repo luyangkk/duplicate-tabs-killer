@@ -1,11 +1,12 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useTabs } from '@/hooks/useTabs';
 import { useArchives } from '@/hooks/useArchives';
 import { useTabPreview } from '@/hooks/useTabPreview';
 import { Settings } from './Settings';
-import { groupTabsByDomain } from '@/utils/grouping';
-import { LayoutGrid, Archive as ArchiveIcon, Search, Globe, Trash2, RotateCcw, Plus, X, Settings as SettingsIcon } from 'lucide-react';
+import { groupTabsByDomain, DomainGroup } from '@/utils/grouping';
+import { LayoutGrid, Archive as ArchiveIcon, Search, Globe, Trash2, RotateCcw, Plus, X, Settings as SettingsIcon, Images } from 'lucide-react';
 import { TabInfo } from '@/utils/tabs';
+import { DomainPreviewModal } from '@/components/DomainPreviewModal';
 
 const PreviewTooltip = ({ url, x, y }: { url: string | null, x: number, y: number }) => {
   const { preview, loading } = useTabPreview(url || undefined);
@@ -66,6 +67,7 @@ function App() {
   const [archiveName, setArchiveName] = useState('');
   
   const [hoveredTab, setHoveredTab] = useState<{ url: string, x: number, y: number } | null>(null);
+  const [previewGroup, setPreviewGroup] = useState<DomainGroup | null>(null);
 
   const domainGroups = useMemo(() => {
     const filteredTabs = tabs.filter(t => 
@@ -76,10 +78,19 @@ function App() {
   }, [tabs, searchQuery]);
 
   const filteredArchives = useMemo(() => {
-    return archives.filter(a => 
+    return archives.filter(a =>
         a.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [archives, searchQuery]);
+
+  const livePreviewGroup = useMemo(() => {
+    if (!previewGroup) return null;
+    return domainGroups.find(g => g.domain === previewGroup.domain) ?? null;
+  }, [previewGroup, domainGroups]);
+
+  useEffect(() => {
+    if (previewGroup && !livePreviewGroup) setPreviewGroup(null);
+  }, [previewGroup, livePreviewGroup]);
 
   const handleCreateArchive = async () => {
     if (!archiveName.trim()) return;
@@ -207,9 +218,18 @@ function App() {
                                         {group.domain}
                                     </h3>
                                 </div>
-                                <span className="text-xs font-medium text-gray-500 bg-white px-2 py-0.5 rounded border border-gray-100">
-                                    {group.tabs.length}
-                                </span>
+                                <div className="flex items-center gap-1.5 shrink-0">
+                                    <button
+                                        onClick={() => setPreviewGroup(group)}
+                                        className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                        title="View screenshot previews"
+                                    >
+                                        <Images className="w-3.5 h-3.5" />
+                                    </button>
+                                    <span className="text-xs font-medium text-gray-500 bg-white px-2 py-0.5 rounded border border-gray-100">
+                                        {group.tabs.length}
+                                    </span>
+                                </div>
                             </div>
                             <div className="max-h-[300px] overflow-y-auto p-2">
                                 {group.tabs.map(tab => (
@@ -363,10 +383,20 @@ function App() {
 
       {/* Tab Preview Tooltip */}
       {hoveredTab && (
-          <PreviewTooltip 
-              url={hoveredTab.url} 
-              x={hoveredTab.x} 
-              y={hoveredTab.y} 
+          <PreviewTooltip
+              url={hoveredTab.url}
+              x={hoveredTab.x}
+              y={hoveredTab.y}
+          />
+      )}
+
+      {/* Domain Screenshot Gallery Modal */}
+      {livePreviewGroup && (
+          <DomainPreviewModal
+              group={livePreviewGroup}
+              onClose={() => setPreviewGroup(null)}
+              onJumpToTab={handleJumpToTab}
+              onCloseTab={(tabId) => removeTab && removeTab(tabId)}
           />
       )}
     </div>

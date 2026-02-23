@@ -41,7 +41,7 @@ beforeEach(() => {
 // ─── savePreview ────────────────────────────────────────────────────────────
 
 describe('savePreview', () => {
-  it('截图和时间戳都被写入 storage', async () => {
+  it('writes screenshot and timestamp to storage', async () => {
     const url = 'https://example.com';
     await savePreview(url, 'data:image/jpeg;base64,AAA');
 
@@ -50,7 +50,7 @@ describe('savePreview', () => {
     expect(timestamps[url]).toBeGreaterThan(0);
   });
 
-  it('同 URL 重复保存会刷新时间戳', async () => {
+  it('refreshes timestamp when saving the same URL again', async () => {
     const url = 'https://example.com';
     await savePreview(url, 'data:old');
     const t1 = (store[TIMESTAMPS_KEY] as Record<string, number>)[url];
@@ -63,27 +63,27 @@ describe('savePreview', () => {
     expect(store[`preview_${url}`]).toBe('data:new');
   });
 
-  it('超过 MAX_PREVIEWS 时淘汰最旧条目', async () => {
-    // 先写入 MAX_PREVIEWS 条，时间戳递增
+  it('evicts the oldest entry when MAX_PREVIEWS is exceeded', async () => {
+    // Pre-fill MAX_PREVIEWS entries with incrementing timestamps
     const now = Date.now();
     const existingTimestamps: Record<string, number> = {};
     for (let i = 0; i < MAX_PREVIEWS; i++) {
       const u = `https://example.com/page${i}`;
       store[`preview_${u}`] = `data:${i}`;
-      existingTimestamps[u] = now + i; // 越早的 i 越小
+      existingTimestamps[u] = now + i; // smaller i = older timestamp
     }
     store[TIMESTAMPS_KEY] = existingTimestamps;
 
-    // 新增第 MAX_PREVIEWS+1 条，应触发淘汰
+    // Adding one more entry should trigger LRU eviction
     const newUrl = 'https://example.com/new';
     await savePreview(newUrl, 'data:new');
 
-    // 最旧的 page0 应被删除
+    // The oldest entry (page0) should be removed
     expect(store['preview_https://example.com/page0']).toBeUndefined();
     const timestamps = store[TIMESTAMPS_KEY] as Record<string, number>;
     expect(timestamps['https://example.com/page0']).toBeUndefined();
 
-    // 新 URL 应存在
+    // The new URL should exist
     expect(store[`preview_${newUrl}`]).toBe('data:new');
     expect(Object.keys(timestamps).length).toBe(MAX_PREVIEWS);
   });
@@ -92,7 +92,7 @@ describe('savePreview', () => {
 // ─── removePreview ──────────────────────────────────────────────────────────
 
 describe('removePreview', () => {
-  it('删除截图及时间戳元数据', async () => {
+  it('removes the screenshot and its timestamp metadata', async () => {
     const url = 'https://example.com';
     store[`preview_${url}`] = 'data:image/jpeg;base64,AAA';
     store[TIMESTAMPS_KEY] = { [url]: Date.now() };
@@ -104,7 +104,7 @@ describe('removePreview', () => {
     expect(timestamps[url]).toBeUndefined();
   });
 
-  it('删除一个 URL 不影响其他 URL', async () => {
+  it('removing one URL does not affect other URLs', async () => {
     const url1 = 'https://a.com';
     const url2 = 'https://b.com';
     store[`preview_${url1}`] = 'data:a';
@@ -123,7 +123,7 @@ describe('removePreview', () => {
 // ─── cleanupExpiredPreviews ─────────────────────────────────────────────────
 
 describe('cleanupExpiredPreviews', () => {
-  it('不清理未过期的截图', async () => {
+  it('does not remove previews that have not expired', async () => {
     const url = 'https://example.com';
     store[`preview_${url}`] = 'data:fresh';
     store[TIMESTAMPS_KEY] = { [url]: Date.now() };
@@ -133,7 +133,7 @@ describe('cleanupExpiredPreviews', () => {
     expect(store[`preview_${url}`]).toBe('data:fresh');
   });
 
-  it('清理超过 TTL 的截图', async () => {
+  it('removes previews that exceed TTL', async () => {
     const url = 'https://old.com';
     store[`preview_${url}`] = 'data:old';
     store[TIMESTAMPS_KEY] = { [url]: Date.now() - TTL_MS - 1000 };
@@ -145,7 +145,7 @@ describe('cleanupExpiredPreviews', () => {
     expect(timestamps[url]).toBeUndefined();
   });
 
-  it('混合场景：只清理过期条目，保留未过期条目', async () => {
+  it('mixed scenario: removes only expired entries, keeps fresh ones', async () => {
     const fresh = 'https://fresh.com';
     const expired = 'https://expired.com';
     const now = Date.now();
@@ -166,7 +166,7 @@ describe('cleanupExpiredPreviews', () => {
     expect(timestamps[expired]).toBeUndefined();
   });
 
-  it('storage 为空时不报错', async () => {
+  it('does not throw when storage is empty', async () => {
     await expect(cleanupExpiredPreviews()).resolves.toBeUndefined();
   });
 });
