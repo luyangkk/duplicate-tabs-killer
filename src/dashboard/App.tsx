@@ -4,7 +4,7 @@ import { useArchives } from '@/hooks/useArchives';
 import { useTabPreview } from '@/hooks/useTabPreview';
 import { Settings } from './Settings';
 import { groupTabsByDomain, DomainGroup } from '@/utils/grouping';
-import { LayoutGrid, Archive as ArchiveIcon, Search, Globe, Trash2, RotateCcw, Plus, X, Settings as SettingsIcon, Images, Copy } from 'lucide-react';
+import { LayoutGrid, Archive as ArchiveIcon, Search, Globe, Trash2, RotateCcw, X, Settings as SettingsIcon, Images, Copy } from 'lucide-react';
 import { TabInfo } from '@/utils/tabs';
 import { DomainPreviewModal } from '@/components/DomainPreviewModal';
 
@@ -208,7 +208,12 @@ function App() {
                     ) : domainGroups.map((group) => (
                         <div key={group.domain} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                             <div className="p-4 border-b border-gray-50 bg-gray-50 flex justify-between items-center">
-                                <div className="flex items-center gap-2 overflow-hidden">
+                                <button
+                                    type="button"
+                                    onClick={() => setPreviewGroup(group)}
+                                    className="flex items-center gap-2 overflow-hidden text-left hover:opacity-90 transition-opacity"
+                                    title="View screenshot previews"
+                                >
                                     {group.favicon ? (
                                         <img src={group.favicon} alt="" className="w-4 h-4" />
                                     ) : (
@@ -217,7 +222,7 @@ function App() {
                                     <h3 className="font-semibold text-gray-800 truncate" title={group.domain}>
                                         {group.domain}
                                     </h3>
-                                </div>
+                                </button>
                                 <div className="flex items-center gap-1.5 shrink-0">
                                     <button
                                         onClick={() => setPreviewGroup(group)}

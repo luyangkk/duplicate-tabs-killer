@@ -10,6 +10,7 @@ export interface DuplicateGroup {
 }
 
 export const getAllTabs = async (): Promise<TabInfo[]> => {
+  if (typeof chrome === 'undefined' || !chrome.tabs?.query) return [];
   const tabs = await chrome.tabs.query({});
   // Filter out tabs without id, url, or title
   return tabs.filter((tab): tab is TabInfo => 
@@ -32,7 +33,7 @@ export const getDuplicateTabs = (tabs: TabInfo[]): DuplicateGroup[] => {
 
   // Filter groups with > 1 tab
   return Object.entries(groups)
-    .filter(([_, groupTabs]) => groupTabs.length > 1)
+    .filter(([, groupTabs]) => groupTabs.length > 1)
     .map(([url, groupTabs]) => ({
       url,
       tabs: groupTabs
@@ -40,6 +41,7 @@ export const getDuplicateTabs = (tabs: TabInfo[]): DuplicateGroup[] => {
 };
 
 export const closeTabs = async (tabIds: number[]): Promise<void> => {
+  if (typeof chrome === 'undefined' || !chrome.tabs?.remove) return;
   if (tabIds.length > 0) {
     await chrome.tabs.remove(tabIds);
   }

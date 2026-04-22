@@ -14,7 +14,9 @@ export const saveArchive = async (name: string, tabs: TabInfo[]): Promise<Archiv
     try {
       const domain = new URL(tab.url).hostname;
       domainCount[domain] = (domainCount[domain] || 0) + 1;
-    } catch {}
+    } catch {
+      return;
+    }
   });
 
   const archive: Archive = {
@@ -25,6 +27,8 @@ export const saveArchive = async (name: string, tabs: TabInfo[]): Promise<Archiv
     domainCount
   };
 
+  if (typeof chrome === 'undefined' || !chrome.storage?.local) return archive;
+
   const { archives } = await chrome.storage.local.get(['archives']);
   const currentArchives: Archive[] = (archives as Archive[]) || [];
   const newArchives = [archive, ...currentArchives];
@@ -34,11 +38,13 @@ export const saveArchive = async (name: string, tabs: TabInfo[]): Promise<Archiv
 };
 
 export const getArchives = async (): Promise<Archive[]> => {
+  if (typeof chrome === 'undefined' || !chrome.storage?.local) return [];
   const { archives } = await chrome.storage.local.get(['archives']);
   return (archives as Archive[]) || [];
 };
 
 export const deleteArchive = async (id: string): Promise<void> => {
+  if (typeof chrome === 'undefined' || !chrome.storage?.local) return;
   const { archives } = await chrome.storage.local.get(['archives']);
   const currentArchives: Archive[] = (archives as Archive[]) || [];
   const newArchives = currentArchives.filter((a: Archive) => a.id !== id);
@@ -46,6 +52,7 @@ export const deleteArchive = async (id: string): Promise<void> => {
 };
 
 export const restoreArchive = async (archive: Archive): Promise<void> => {
+  if (typeof chrome === 'undefined' || !chrome.tabs?.create) return;
   for (const tab of archive.tabs) {
     await chrome.tabs.create({ url: tab.url, active: false });
   }
