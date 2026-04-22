@@ -48,38 +48,58 @@ const C = {
 // ---------------------------------------------------------------------------
 const iconSvg = `<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
 
-  <!-- Background -->
-  <rect width="128" height="128" rx="22" fill="${C.bgLight}"/>
+  <g transform="translate(64 64) scale(1.42) translate(-64 -64)">
+    <path d="M30 48c0-4.4 3.6-8 8-8h18l6 7h28c4.4 0 8 3.6 8 8v31c0 4.4-3.6 8-8 8H38c-4.4 0-8-3.6-8-8V48z"
+          fill="${C.tabBack}"/>
+    <path d="M22 42c0-4.4 3.6-8 8-8h20l6 7h32c4.4 0 8 3.6 8 8v33c0 4.4-3.6 8-8 8H30c-4.4 0-8-3.6-8-8V42z"
+          fill="${C.tabFront}"/>
+    <path d="M32 58h52" stroke="${C.white}" stroke-width="3" stroke-linecap="round" opacity="0.26"/>
+    <path d="M32 70h34" stroke="${C.white}" stroke-width="3" stroke-linecap="round" opacity="0.18"/>
 
-  <!-- ── Duplicate tab (back / lighter) ─────────────────────────────── -->
-  <!-- Tab handle (ear) -->
-  <rect x="30" y="34" width="26" height="14" rx="4" fill="${C.tabBack}"/>
-  <!-- Connect handle → body (no visible gap) -->
-  <rect x="30" y="44" width="26" height="5"  fill="${C.tabBack}"/>
-  <!-- Tab body -->
-  <rect x="30" y="46" width="66" height="48" rx="7" fill="${C.tabBack}"/>
+    <circle cx="80" cy="48" r="19" fill="${C.badge}"/>
+    <path d="M72.5 40.5 L87.5 55.5 M87.5 40.5 L72.5 55.5" stroke="${C.white}" stroke-width="4.2" stroke-linecap="round"/>
+  </g>
+</svg>`;
 
-  <!-- ── Main tab (front / vivid blue) ──────────────────────────────── -->
-  <!-- Tab handle (ear) -->
-  <rect x="20" y="28" width="30" height="15" rx="5" fill="${C.tabFront}"/>
-  <!-- Connect handle → body -->
-  <rect x="20" y="40" width="30" height="5"  fill="${C.tabFront}"/>
-  <!-- Tab body -->
-  <rect x="20" y="42" width="74" height="50" rx="7" fill="${C.tabFront}"/>
-  <!-- Subtle address-bar separator inside the tab -->
-  <rect x="20" y="55" width="74" height="2"  fill="${C.white}" opacity="0.22"/>
-  <!-- Two short content lines (conveys "real page content") -->
-  <rect x="30" y="64" width="44" height="5"  rx="2.5" fill="${C.white}" opacity="0.35"/>
-  <rect x="30" y="75" width="28" height="5"  rx="2.5" fill="${C.white}" opacity="0.22"/>
+const iconSvg16 = `<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
 
-  <!-- ── Kill badge ──────────────────────────────────────────────────── -->
-  <circle cx="90" cy="83" r="19" fill="${C.badge}"/>
-  <!-- Subtle inner ring for depth -->
-  <circle cx="90" cy="83" r="19" fill="none" stroke="${C.white}" stroke-width="1.5" opacity="0.25"/>
-  <!-- White × -->
-  <path d="M83 76 L97 90 M97 76 L83 90"
-        stroke="${C.white}" stroke-width="4" stroke-linecap="round"/>
+  <g transform="translate(65 64) scale(1.30) translate(-64 -64)">
+    <path d="M30 48c0-4.4 3.6-8 8-8h18l6 7h28c4.4 0 8 3.6 8 8v31c0 4.4-3.6 8-8 8H38c-4.4 0-8-3.6-8-8V48z"
+          fill="${C.tabBack}"/>
+    <path d="M22 42c0-4.4 3.6-8 8-8h20l6 7h32c4.4 0 8 3.6 8 8v33c0 4.4-3.6 8-8 8H30c-4.4 0-8-3.6-8-8V42z"
+          fill="${C.tabFront}"/>
+    <path d="M32 58h52" stroke="${C.white}" stroke-width="3" stroke-linecap="round" opacity="0.26"/>
+    <path d="M32 70h34" stroke="${C.white}" stroke-width="3" stroke-linecap="round" opacity="0.18"/>
 
+    <circle cx="80" cy="48" r="19" fill="${C.badge}"/>
+    <path d="M72.5 40.5 L87.5 55.5 M87.5 40.5 L72.5 55.5" stroke="${C.white}" stroke-width="4.2" stroke-linecap="round"/>
+  </g>
+</svg>`;
+
+const actionIconSvg32 = `<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+
+  <g transform="translate(66 64) scale(1.46) translate(-64 -64)">
+    <path d="M30 48c0-4.4 3.6-8 8-8h18l6 7h28c4.4 0 8 3.6 8 8v31c0 4.4-3.6 8-8 8H38c-4.4 0-8-3.6-8-8V48z"
+          fill="${C.tabBack}"/>
+    <path d="M22 42c0-4.4 3.6-8 8-8h20l6 7h32c4.4 0 8 3.6 8 8v33c0 4.4-3.6 8-8 8H30c-4.4 0-8-3.6-8-8V42z"
+          fill="${C.tabFront}"/>
+
+    <circle cx="82" cy="48" r="20" fill="${C.badge}"/>
+    <path d="M74 40 L90 56 M90 40 L74 56" stroke="${C.white}" stroke-width="5.2" stroke-linecap="round"/>
+  </g>
+</svg>`;
+
+const actionIconSvg16 = `<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+
+  <g transform="translate(66 64) scale(1.36) translate(-64 -64)">
+    <path d="M30 48c0-4.4 3.6-8 8-8h18l6 7h28c4.4 0 8 3.6 8 8v31c0 4.4-3.6 8-8 8H38c-4.4 0-8-3.6-8-8V48z"
+          fill="${C.tabBack}"/>
+    <path d="M22 42c0-4.4 3.6-8 8-8h20l6 7h32c4.4 0 8 3.6 8 8v33c0 4.4-3.6 8-8 8H30c-4.4 0-8-3.6-8-8V42z"
+          fill="${C.tabFront}"/>
+
+    <circle cx="82" cy="48" r="18" fill="${C.badge}"/>
+    <path d="M75 41 L89 55 M89 41 L75 55" stroke="${C.white}" stroke-width="5" stroke-linecap="round"/>
+  </g>
 </svg>`;
 
 // ---------------------------------------------------------------------------
@@ -114,29 +134,17 @@ const promoSvg = `<svg width="440" height="280" viewBox="0 0 440 280" fill="none
   <rect x="12" y="58" width="164" height="164" rx="28" fill="url(#iconGlow)"/>
 
   <g transform="translate(12,58) scale(1.28125)">
-    <!-- Background -->
-    <rect width="128" height="128" rx="22" fill="${C.bgLight}"/>
-    <!-- Drop shadow effect via a rect -->
-    <rect width="128" height="128" rx="22" fill="none" stroke="${C.tabBack}" stroke-width="1.5" opacity="0.6"/>
+    <g transform="translate(64 64) scale(1.42) translate(-64 -64)">
+      <path d="M30 48c0-4.4 3.6-8 8-8h18l6 7h28c4.4 0 8 3.6 8 8v31c0 4.4-3.6 8-8 8H38c-4.4 0-8-3.6-8-8V48z"
+            fill="${C.tabBack}"/>
+      <path d="M22 42c0-4.4 3.6-8 8-8h20l6 7h32c4.4 0 8 3.6 8 8v33c0 4.4-3.6 8-8 8H30c-4.4 0-8-3.6-8-8V42z"
+            fill="${C.tabFront}"/>
+      <path d="M32 58h52" stroke="${C.white}" stroke-width="3" stroke-linecap="round" opacity="0.26"/>
+      <path d="M32 70h34" stroke="${C.white}" stroke-width="3" stroke-linecap="round" opacity="0.18"/>
 
-    <!-- Duplicate tab (back) -->
-    <rect x="30" y="34" width="26" height="14" rx="4" fill="${C.tabBack}"/>
-    <rect x="30" y="44" width="26" height="5"  fill="${C.tabBack}"/>
-    <rect x="30" y="46" width="66" height="48" rx="7" fill="${C.tabBack}"/>
-
-    <!-- Main tab (front) -->
-    <rect x="20" y="28" width="30" height="15" rx="5" fill="${C.tabFront}"/>
-    <rect x="20" y="40" width="30" height="5"  fill="${C.tabFront}"/>
-    <rect x="20" y="42" width="74" height="50" rx="7" fill="${C.tabFront}"/>
-    <rect x="20" y="55" width="74" height="2"  fill="${C.white}" opacity="0.22"/>
-    <rect x="30" y="64" width="44" height="5"  rx="2.5" fill="${C.white}" opacity="0.35"/>
-    <rect x="30" y="75" width="28" height="5"  rx="2.5" fill="${C.white}" opacity="0.22"/>
-
-    <!-- Kill badge -->
-    <circle cx="90" cy="83" r="19" fill="${C.badge}"/>
-    <circle cx="90" cy="83" r="19" fill="none" stroke="${C.white}" stroke-width="1.5" opacity="0.25"/>
-    <path d="M83 76 L97 90 M97 76 L83 90"
-          stroke="${C.white}" stroke-width="4" stroke-linecap="round"/>
+      <circle cx="80" cy="48" r="19" fill="${C.badge}"/>
+      <path d="M72.5 40.5 L87.5 55.5 M87.5 40.5 L72.5 55.5" stroke="${C.white}" stroke-width="4.2" stroke-linecap="round"/>
+    </g>
   </g>
 
   <!-- Vertical divider -->
@@ -192,12 +200,25 @@ async function main() {
 
   // Icon PNGs
   for (const size of [16, 32, 48, 128]) {
-    await sharp(Buffer.from(iconSvg))
+    const svg = size === 16 ? iconSvg16 : iconSvg;
+    await sharp(Buffer.from(svg))
       .resize(size, size)
       .png({ compressionLevel: 9 })
       .toFile(join(iconsDir, `icon${size}.png`));
     console.log(`✓ icons/icon${size}.png`);
   }
+
+  await sharp(Buffer.from(actionIconSvg16))
+    .resize(16, 16)
+    .png({ compressionLevel: 9 })
+    .toFile(join(iconsDir, 'icon16-action.png'));
+  console.log('✓ icons/icon16-action.png');
+
+  await sharp(Buffer.from(actionIconSvg32))
+    .resize(32, 32)
+    .png({ compressionLevel: 9 })
+    .toFile(join(iconsDir, 'icon32-action.png'));
+  console.log('✓ icons/icon32-action.png');
 
   // Promotional tile
   await sharp(Buffer.from(promoSvg))
