@@ -6,14 +6,17 @@ export interface Archive {
   tabs: TabInfo[];
   createdAt: number;
   domainCount: Record<string, number>;
+  domainFavicons?: Record<string, string>;
 }
 
 export const saveArchive = async (name: string, tabs: TabInfo[]): Promise<Archive> => {
   const domainCount: Record<string, number> = {};
+  const domainFavicons: Record<string, string> = {};
   tabs.forEach(tab => {
     try {
       const domain = new URL(tab.url).hostname;
       domainCount[domain] = (domainCount[domain] || 0) + 1;
+      if (!domainFavicons[domain] && tab.favIconUrl) domainFavicons[domain] = tab.favIconUrl;
     } catch {
       return;
     }
@@ -24,7 +27,8 @@ export const saveArchive = async (name: string, tabs: TabInfo[]): Promise<Archiv
     name,
     tabs,
     createdAt: Date.now(),
-    domainCount
+    domainCount,
+    domainFavicons
   };
 
   if (typeof chrome === 'undefined' || !chrome.storage?.local) return archive;

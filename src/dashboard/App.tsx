@@ -4,8 +4,8 @@ import { useArchives } from '@/hooks/useArchives';
 import { useTabPreview } from '@/hooks/useTabPreview';
 import { Settings } from './Settings';
 import { groupTabsByDomain, DomainGroup } from '@/utils/grouping';
-import { LayoutGrid, Archive as ArchiveIcon, Search, Globe, Trash2, RotateCcw, X, Settings as SettingsIcon, Images, Copy } from 'lucide-react';
-import { TabInfo } from '@/utils/tabs';
+import { LayoutGrid, Archive as ArchiveIcon, Search, Globe, Trash2, RotateCcw, X, Settings as SettingsIcon, Images, Copy, Loader2 } from 'lucide-react';
+import { closeTabs, TabInfo } from '@/utils/tabs';
 import { DomainPreviewModal } from '@/components/DomainPreviewModal';
 
 const PreviewTooltip = ({ url, x, y }: { url: string | null, x: number, y: number }) => {
@@ -65,6 +65,9 @@ function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
   const [archiveName, setArchiveName] = useState('');
+  const [archiveTabs, setArchiveTabs] = useState<TabInfo[] | null>(null);
+  const [archiveTitle, setArchiveTitle] = useState('');
+  const [deletingArchiveIds, setDeletingArchiveIds] = useState<Record<string, true>>({});
   
   const [hoveredTab, setHoveredTab] = useState<{ url: string, x: number, y: number } | null>(null);
   const [previewGroup, setPreviewGroup] = useState<DomainGroup | null>(null);
@@ -80,6 +83,43 @@ function App() {
   const maxDomainGroupTabs = useMemo(() => {
     return domainGroups[0]?.tabs.length ?? 0;
   }, [domainGroups]);
+
+  const openArchiveModal = (nextArchiveTabs: TabInfo[], nextTitle: string, nextName: string) => {
+    setArchiveTabs(nextArchiveTabs);
+    setArchiveTitle(nextTitle);
+    setArchiveName(nextName);
+    setIsArchiveModalOpen(true);
+  };
+
+  /** Closes tabs that were archived; intentionally keeps extension pages open. */
+  const closeArchivedTabs = async (tabsToClose: TabInfo[]) => {
+    const tabIdsToClose = tabsToClose
+      .filter(t => typeof t.id === 'number' && !t.url?.startsWith('chrome-extension://'))
+      .map(t => t.id);
+
+    await closeTabs(tabIdsToClose);
+  };
+
+  /** Triggers a shatter animation, then deletes the archive after the animation finishes. */
+  /** Triggers a fade-out animation, then deletes the archive after the animation finishes. */
+  const requestDeleteArchive = (archiveId: string) => {
+    setDeletingArchiveIds(prev => (prev[archiveId] ? prev : { ...prev, [archiveId]: true }));
+
+    window.setTimeout(async () => {
+      try {
+        await removeArchive(archiveId);
+      } catch (error) {
+        console.error('Failed to delete archive:', error);
+      } finally {
+        setDeletingArchiveIds(prev => {
+          if (!prev[archiveId]) return prev;
+          const next = { ...prev };
+          delete next[archiveId];
+          return next;
+        });
+      }
+    }, 420);
+  };
 
   const filteredArchives = useMemo(() => {
     return archives.filter(a =>
@@ -98,8 +138,12 @@ function App() {
 
   const handleCreateArchive = async () => {
     if (!archiveName.trim()) return;
-    await addArchive(archiveName, tabs);
+    const tabsToArchive = archiveTabs ?? tabs;
+    await addArchive(archiveName, tabsToArchive);
+    await closeArchivedTabs(tabsToArchive);
     setArchiveName('');
+    setArchiveTabs(null);
+    setArchiveTitle('');
     setIsArchiveModalOpen(false);
     setActiveTab('archives');
   };
@@ -191,7 +235,7 @@ function App() {
                     
                     {activeTab === 'current' && (
                         <button
-                            onClick={() => setIsArchiveModalOpen(true)}
+                            onClick={() => openArchiveModal(tabs, 'Archive Current Session', '')}
                             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors shadow-sm"
                         >
                             <ArchiveIcon className="w-4 h-4" />
@@ -228,6 +272,13 @@ function App() {
                                     </h3>
                                 </button>
                                 <div className="flex items-center gap-1.5 shrink-0">
+                                    <button
+                                        onClick={() => openArchiveModal(group.tabs, 'Archive Domain', group.domain)}
+                                        className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                        title="Archive this domain"
+                                    >
+                                        <ArchiveIcon className="w-3.5 h-3.5" />
+                                    </button>
                                     <button
                                         onClick={() => setPreviewGroup(group)}
                                         className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
@@ -292,7 +343,11 @@ function App() {
                             No archives found.
                         </div>
                     ) : filteredArchives.map((archive) => (
-                        <div key={archive.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex flex-col h-full">
+                        <div
+                            key={archive.id}
+                            data-archive-card={archive.id}
+                            className={`relative bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex flex-col h-full ${deletingArchiveIds[archive.id] ? 'archive-delete-fade pointer-events-none' : ''}`}
+                        >
                             <div className="flex justify-between items-start mb-4">
                                 <div>
                                     <h3 className="font-bold text-gray-800 text-lg mb-1">{archive.name}</h3>
@@ -305,15 +360,21 @@ function App() {
                                         onClick={() => restore(archive)}
                                         className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                                         title="Restore Session"
+                                        disabled={!!deletingArchiveIds[archive.id]}
                                     >
                                         <RotateCcw className="w-4 h-4" />
                                     </button>
                                     <button 
-                                        onClick={() => removeArchive(archive.id)}
+                                        onClick={() => requestDeleteArchive(archive.id)}
                                         className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                                         title="Delete Archive"
+                                        disabled={!!deletingArchiveIds[archive.id]}
                                     >
-                                        <Trash2 className="w-4 h-4" />
+                                        {deletingArchiveIds[archive.id] ? (
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                        ) : (
+                                            <Trash2 className="w-4 h-4" />
+                                        )}
                                     </button>
                                 </div>
                             </div>
@@ -328,7 +389,12 @@ function App() {
                                         .sort(([,a], [,b]) => b - a)
                                         .slice(0, 3)
                                         .map(([domain, count]) => (
-                                            <span key={domain} className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
+                                            <span key={domain} className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded inline-flex items-center gap-1.5">
+                                                {archive.domainFavicons?.[domain] ? (
+                                                    <img src={archive.domainFavicons[domain]} alt="" className="w-3 h-3" />
+                                                ) : (
+                                                    <Globe className="w-3 h-3 text-gray-400" />
+                                                )}
                                                 {domain} ({count})
                                             </span>
                                         ))
@@ -340,6 +406,16 @@ function App() {
                                     )}
                                 </div>
                             </div>
+
+                            {deletingArchiveIds[archive.id] && (
+                                <div className="absolute inset-0 z-10 pointer-events-none">
+                                    <div className="absolute inset-0 bg-white/40" />
+                                    <div className="absolute top-3 right-3 flex items-center gap-2 rounded-full bg-white/80 px-2.5 py-1 text-xs text-gray-600 shadow-sm border border-gray-100">
+                                        <Loader2 className="w-3.5 h-3.5 animate-spin text-red-500" />
+                                        删除中…
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     ))}
                 </div>
@@ -352,8 +428,15 @@ function App() {
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
             <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 animate-in fade-in zoom-in duration-200">
                 <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-xl font-bold text-gray-900">Archive Current Session</h3>
-                    <button onClick={() => setIsArchiveModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                    <h3 className="text-xl font-bold text-gray-900">{archiveTitle || 'Archive'}</h3>
+                    <button
+                        onClick={() => {
+                            setIsArchiveModalOpen(false);
+                            setArchiveTabs(null);
+                            setArchiveTitle('');
+                        }}
+                        className="text-gray-400 hover:text-gray-600"
+                    >
                         <X className="w-5 h-5" />
                     </button>
                 </div>
@@ -369,13 +452,17 @@ function App() {
                         autoFocus
                     />
                     <p className="mt-2 text-sm text-gray-500">
-                        This will save all {tabs.length} currently open tabs.
+                        This will save {archiveTabs?.length ?? tabs.length} tabs.
                     </p>
                 </div>
                 
                 <div className="flex justify-end gap-3">
                     <button
-                        onClick={() => setIsArchiveModalOpen(false)}
+                        onClick={() => {
+                            setIsArchiveModalOpen(false);
+                            setArchiveTabs(null);
+                            setArchiveTitle('');
+                        }}
                         className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg font-medium"
                     >
                         Cancel

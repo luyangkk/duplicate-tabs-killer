@@ -1,3 +1,27 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@keyframes archiveFadeOut {
+  0% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0) scale(0.9);
+  }
+}
+
+.archive-delete-fade {
+  transform-origin: 50% 25%;
+  will-change: transform, opacity;
+  animation: archiveFadeOut 420ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .archive-delete-fade {
+    animation: none;
+    opacity: 0;
+  }
+}
