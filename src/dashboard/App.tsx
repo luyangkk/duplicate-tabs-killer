@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useTabs } from '@/hooks/useTabs';
 import { useArchives } from '@/hooks/useArchives';
 import { useTabPreview } from '@/hooks/useTabPreview';
@@ -67,7 +67,10 @@ function App() {
   const [archiveName, setArchiveName] = useState('');
   const [archiveTabs, setArchiveTabs] = useState<TabInfo[] | null>(null);
   const [archiveTitle, setArchiveTitle] = useState('');
+  const [archiveContext, setArchiveContext] = useState<'session' | 'domain'>('session');
   const [deletingArchiveIds, setDeletingArchiveIds] = useState<Record<string, true>>({});
+  const [successToast, setSuccessToast] = useState<string | null>(null);
+  const successToastTimerRef = useRef<number | null>(null);
   
   const [hoveredTab, setHoveredTab] = useState<{ url: string, x: number, y: number } | null>(null);
   const [previewGroup, setPreviewGroup] = useState<DomainGroup | null>(null);
@@ -84,11 +87,23 @@ function App() {
     return domainGroups[0]?.tabs.length ?? 0;
   }, [domainGroups]);
 
-  const openArchiveModal = (nextArchiveTabs: TabInfo[], nextTitle: string, nextName: string) => {
+  /** Opens archive modal with a target tabs list and context. */
+  const openArchiveModal = (nextArchiveTabs: TabInfo[], nextTitle: string, nextName: string, nextContext: 'session' | 'domain') => {
     setArchiveTabs(nextArchiveTabs);
     setArchiveTitle(nextTitle);
     setArchiveName(nextName);
+    setArchiveContext(nextContext);
     setIsArchiveModalOpen(true);
+  };
+
+  /** Shows a transient success toast message. */
+  const showSuccessToast = (message: string) => {
+    if (successToastTimerRef.current) window.clearTimeout(successToastTimerRef.current);
+    setSuccessToast(message);
+    successToastTimerRef.current = window.setTimeout(() => {
+      setSuccessToast(null);
+      successToastTimerRef.current = null;
+    }, 2200);
   };
 
   /** Closes tabs that were archived; intentionally keeps extension pages open. */
@@ -136,16 +151,27 @@ function App() {
     if (previewGroup && !livePreviewGroup) setPreviewGroup(null);
   }, [previewGroup, livePreviewGroup]);
 
+  useEffect(() => {
+    return () => {
+      if (successToastTimerRef.current) window.clearTimeout(successToastTimerRef.current);
+    };
+  }, []);
+
   const handleCreateArchive = async () => {
     if (!archiveName.trim()) return;
     const tabsToArchive = archiveTabs ?? tabs;
     await addArchive(archiveName, tabsToArchive);
     await closeArchivedTabs(tabsToArchive);
+    if (archiveContext === 'domain') {
+      showSuccessToast(`已归档「${archiveName}」的 ${tabsToArchive.length} 个标签页`);
+    } else {
+      showSuccessToast(`已归档「${archiveName}」(${tabsToArchive.length} 个标签页)`);
+    }
     setArchiveName('');
     setArchiveTabs(null);
     setArchiveTitle('');
+    setArchiveContext('session');
     setIsArchiveModalOpen(false);
-    setActiveTab('archives');
   };
 
   const handleJumpToTab = async (tab: TabInfo) => {
@@ -159,6 +185,14 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-800 font-sans">
+      {successToast && (
+        <div className="fixed top-4 right-4 z-50">
+          <div className="bg-white border border-gray-100 shadow-lg rounded-xl px-4 py-2 text-sm text-gray-700 flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-green-500" />
+            <span>{successToast}</span>
+          </div>
+        </div>
+      )}
       {/* Sidebar */}
       <div className="fixed inset-y-0 left-0 w-64 bg-white border-r border-gray-200 flex flex-col z-20">
         <div className="p-6 border-b border-gray-100">
@@ -235,7 +269,7 @@ function App() {
                     
                     {activeTab === 'current' && (
                         <button
-                            onClick={() => openArchiveModal(tabs, 'Archive Current Session', '')}
+                            onClick={() => openArchiveModal(tabs, 'Archive Current Session', '', 'session')}
                             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors shadow-sm"
                         >
                             <ArchiveIcon className="w-4 h-4" />
@@ -273,7 +307,7 @@ function App() {
                                 </button>
                                 <div className="flex items-center gap-1.5 shrink-0">
                                     <button
-                                        onClick={() => openArchiveModal(group.tabs, 'Archive Domain', group.domain)}
+                                        onClick={() => openArchiveModal(group.tabs, 'Archive Domain', group.domain, 'domain')}
                                         className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
                                         title="Archive this domain"
                                     >
