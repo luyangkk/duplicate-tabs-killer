@@ -70,6 +70,7 @@ function App() {
   const [archiveTabs, setArchiveTabs] = useState<TabInfo[] | null>(null);
   const [archiveTitle, setArchiveTitle] = useState('');
   const [archiveContext, setArchiveContext] = useState<'session' | 'domain'>('session');
+  const [frozenDomainOrder, setFrozenDomainOrder] = useState<string[] | null>(null);
   const [deletingArchiveIds, setDeletingArchiveIds] = useState<Record<string, true>>({});
   const [deletingArchivedTabIds, setDeletingArchivedTabIds] = useState<Record<string, true>>({});
   const [successToast, setSuccessToast] = useState<string | null>(null);
@@ -80,7 +81,7 @@ function App() {
   const [archivingTabIds, setArchivingTabIds] = useState<Record<number, true>>({});
   const [closingTabIds, setClosingTabIds] = useState<Record<number, true>>({});
 
-  const domainGroups = useMemo(() => {
+  const domainGroupsSorted = useMemo(() => {
     const filteredTabs = tabs.filter(t => 
         t.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
         t.url.toLowerCase().includes(searchQuery.toLowerCase())
@@ -88,9 +89,29 @@ function App() {
     return groupTabsByDomain(filteredTabs);
   }, [tabs, searchQuery]);
 
+  /** Freezes current domain group order to prevent reordering during batch operations. */
+  const freezeDomainOrderIfNeeded = () => {
+    if (frozenDomainOrder) return;
+    setFrozenDomainOrder(domainGroupsSorted.map(g => g.domain));
+  };
+
+  const displayDomainGroups = useMemo(() => {
+    if (!frozenDomainOrder) return domainGroupsSorted;
+    const orderIndex = new Map(frozenDomainOrder.map((d, i) => [d, i] as const));
+    return [...domainGroupsSorted].sort((a, b) => {
+      const ia = orderIndex.get(a.domain);
+      const ib = orderIndex.get(b.domain);
+      if (ia === undefined && ib === undefined) return 0;
+      if (ia === undefined) return 1;
+      if (ib === undefined) return -1;
+      return ia - ib;
+    });
+  }, [domainGroupsSorted, frozenDomainOrder]);
+
   const maxDomainGroupTabs = useMemo(() => {
-    return domainGroups[0]?.tabs.length ?? 0;
-  }, [domainGroups]);
+    if (domainGroupsSorted.length === 0) return 0;
+    return Math.max(...domainGroupsSorted.map(g => g.tabs.length));
+  }, [domainGroupsSorted]);
 
   /** Opens archive modal with a target tabs list and context. */
   const openArchiveModal = (nextArchiveTabs: TabInfo[], nextTitle: string, nextName: string, nextContext: 'session' | 'domain') => {
@@ -125,6 +146,8 @@ function App() {
     if (!tab.id) return;
     if (archivedUrlSet.has(tab.url)) return;
 
+    freezeDomainOrderIfNeeded();
+
     setArchivingTabIds(prev => (prev[tab.id] ? prev : { ...prev, [tab.id]: true }));
     try {
       await archiveTab(tab);
@@ -153,6 +176,8 @@ function App() {
   const closeSingleTabAnimated = async (tab: TabInfo) => {
     if (!tab.id) return;
     if (closingTabIds[tab.id]) return;
+
+    freezeDomainOrderIfNeeded();
 
     setClosingTabIds(prev => ({ ...prev, [tab.id]: true }));
     window.setTimeout(async () => {
@@ -224,8 +249,8 @@ function App() {
 
   const livePreviewGroup = useMemo(() => {
     if (!previewGroup) return null;
-    return domainGroups.find(g => g.domain === previewGroup.domain) ?? null;
-  }, [previewGroup, domainGroups]);
+    return displayDomainGroups.find(g => g.domain === previewGroup.domain) ?? null;
+  }, [previewGroup, displayDomainGroups]);
 
   useEffect(() => {
     if (previewGroup && !livePreviewGroup) setPreviewGroup(null);
@@ -239,6 +264,7 @@ function App() {
 
   const handleCreateArchive = async () => {
     if (!archiveName.trim()) return;
+    freezeDomainOrderIfNeeded();
     const tabsToArchive = archiveTabs ?? tabs;
     await addArchive(archiveName, tabsToArchive);
     await closeArchivedTabs(tabsToArchive);
@@ -367,7 +393,7 @@ function App() {
                 <div className="columns-1 md:columns-2 lg:columns-3 gap-6 [column-fill:_balance]">
                     {tabsLoading ? (
                         <p className="text-gray-500">Loading tabs...</p>
-                    ) : domainGroups.map((group) => (
+                    ) : displayDomainGroups.map((group) => (
                         <div key={group.domain} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6 break-inside-avoid">
                             <div className="p-4 border-b border-gray-50 bg-gray-50 flex justify-between items-center">
                                 <button
@@ -691,6 +717,7 @@ function App() {
               onClose={() => setPreviewGroup(null)}
               onJumpToTab={handleJumpToTab}
               onCloseTab={(tabId) => removeTab && removeTab(tabId)}
+              onBeforeCloseTab={freezeDomainOrderIfNeeded}
           />
       )}
     </div>

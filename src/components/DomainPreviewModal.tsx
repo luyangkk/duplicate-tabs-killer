@@ -9,6 +9,7 @@ interface DomainPreviewModalProps {
   onClose: () => void;
   onJumpToTab: (tab: TabInfo) => void;
   onCloseTab: (tabId: number) => void;
+  onBeforeCloseTab?: () => void;
 }
 
 interface PreviewCardProps {
@@ -107,7 +108,7 @@ const EmptyState = ({ hasSearch }: { hasSearch: boolean }) => (
   </div>
 );
 
-export const DomainPreviewModal = ({ group, onClose, onJumpToTab, onCloseTab }: DomainPreviewModalProps) => {
+export const DomainPreviewModal = ({ group, onClose, onJumpToTab, onCloseTab, onBeforeCloseTab }: DomainPreviewModalProps) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [closingTabIds, setClosingTabIds] = useState<Record<number, true>>({});
 
@@ -125,6 +126,7 @@ export const DomainPreviewModal = ({ group, onClose, onJumpToTab, onCloseTab }: 
   /** Closes a tab with the same fade-out motion used across the dashboard. */
   const requestCloseTab = (tabId: number) => {
     if (closingTabIds[tabId]) return;
+    if (typeof onBeforeCloseTab === 'function') onBeforeCloseTab();
     setClosingTabIds(prev => ({ ...prev, [tabId]: true }));
     window.setTimeout(() => {
       try {
