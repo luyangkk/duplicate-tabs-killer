@@ -77,6 +77,10 @@ function App() {
     return groupTabsByDomain(filteredTabs);
   }, [tabs, searchQuery]);
 
+  const maxDomainGroupTabs = useMemo(() => {
+    return domainGroups[0]?.tabs.length ?? 0;
+  }, [domainGroups]);
+
   const filteredArchives = useMemo(() => {
     return archives.filter(a =>
         a.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -202,11 +206,11 @@ function App() {
             {activeTab === 'settings' ? (
                 <Settings />
             ) : activeTab === 'current' ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="columns-1 md:columns-2 lg:columns-3 gap-6 [column-fill:_balance]">
                     {tabsLoading ? (
                         <p className="text-gray-500">Loading tabs...</p>
                     ) : domainGroups.map((group) => (
-                        <div key={group.domain} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div key={group.domain} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6 break-inside-avoid">
                             <div className="p-4 border-b border-gray-50 bg-gray-50 flex justify-between items-center">
                                 <button
                                     type="button"
@@ -236,7 +240,9 @@ function App() {
                                     </span>
                                 </div>
                             </div>
-                            <div className="max-h-[300px] overflow-y-auto p-2">
+                            <div
+                                className={`overflow-y-auto p-2 ${group.tabs.length === maxDomainGroupTabs ? 'max-h-[calc(100vh-260px)]' : 'max-h-[360px]'}`}
+                            >
                                 {group.tabs.map(tab => (
                                     <div 
                                         key={tab.id} 
