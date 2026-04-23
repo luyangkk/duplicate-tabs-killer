@@ -17,14 +17,15 @@ interface PreviewCardProps {
   previewLoading: boolean;
   onJump: () => void;
   onClose: () => void;
+  isClosing: boolean;
 }
 
-const PreviewCard = ({ tab, preview, previewLoading, onJump, onClose }: PreviewCardProps) => {
+const PreviewCard = ({ tab, preview, previewLoading, onJump, onClose, isClosing }: PreviewCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
 
   return (
     <div
-      className="bg-white rounded-lg border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+      className={`bg-white rounded-lg border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer ${isClosing ? 'archive-delete-fade pointer-events-none' : ''}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={onJump}
@@ -108,6 +109,7 @@ const EmptyState = ({ hasSearch }: { hasSearch: boolean }) => (
 
 export const DomainPreviewModal = ({ group, onClose, onJumpToTab, onCloseTab }: DomainPreviewModalProps) => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [closingTabIds, setClosingTabIds] = useState<Record<number, true>>({});
 
   const urls = useMemo(() => group.tabs.map(t => t.url), [group.tabs]);
   const { previews, loading } = useDomainPreviews(urls);
@@ -119,6 +121,24 @@ export const DomainPreviewModal = ({ group, onClose, onJumpToTab, onCloseTab }: 
       t => t.title.toLowerCase().includes(q) || t.url.toLowerCase().includes(q)
     );
   }, [group.tabs, searchQuery]);
+
+  /** Closes a tab with the same fade-out motion used across the dashboard. */
+  const requestCloseTab = (tabId: number) => {
+    if (closingTabIds[tabId]) return;
+    setClosingTabIds(prev => ({ ...prev, [tabId]: true }));
+    window.setTimeout(() => {
+      try {
+        onCloseTab(tabId);
+      } finally {
+        setClosingTabIds(prev => {
+          if (!prev[tabId]) return prev;
+          const next = { ...prev };
+          delete next[tabId];
+          return next;
+        });
+      }
+    }, 420);
+  };
 
   // ESC key to close
   useEffect(() => {
@@ -189,7 +209,8 @@ export const DomainPreviewModal = ({ group, onClose, onJumpToTab, onCloseTab }: 
                   preview={previews[tab.url] ?? null}
                   previewLoading={loading}
                   onJump={() => onJumpToTab(tab)}
-                  onClose={() => tab.id && onCloseTab(tab.id)}
+                  onClose={() => tab.id && requestCloseTab(tab.id)}
+                  isClosing={!!(tab.id && closingTabIds[tab.id])}
                 />
               ))}
             </div>

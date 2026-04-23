@@ -1,10 +1,11 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useTabs } from '@/hooks/useTabs';
 import { useArchives } from '@/hooks/useArchives';
+import { useArchivedTabs } from '@/hooks/useArchivedTabs';
 import { useTabPreview } from '@/hooks/useTabPreview';
 import { Settings } from './Settings';
 import { groupTabsByDomain, DomainGroup } from '@/utils/grouping';
-import { LayoutGrid, Archive as ArchiveIcon, Search, Globe, Trash2, RotateCcw, X, Settings as SettingsIcon, Images, Copy, Loader2 } from 'lucide-react';
+import { LayoutGrid, Archive as ArchiveIcon, Search, Globe, Trash2, RotateCcw, X, Settings as SettingsIcon, Images, Copy, Loader2, Check } from 'lucide-react';
 import { closeTabs, TabInfo } from '@/utils/tabs';
 import { DomainPreviewModal } from '@/components/DomainPreviewModal';
 
@@ -60,6 +61,7 @@ const PreviewTooltip = ({ url, x, y }: { url: string | null, x: number, y: numbe
 function App() {
   const { tabs, loading: tabsLoading, removeTab } = useTabs();
   const { archives, loading: archivesLoading, addArchive, removeArchive, restore } = useArchives();
+  const { archivedTabs, archivedUrlSet, loading: archivedTabsLoading, archiveTab, removeArchivedTab, restoreTab } = useArchivedTabs();
   
   const [activeTab, setActiveTab] = useState<'current' | 'archives' | 'settings'>('current');
   const [searchQuery, setSearchQuery] = useState('');
@@ -69,11 +71,14 @@ function App() {
   const [archiveTitle, setArchiveTitle] = useState('');
   const [archiveContext, setArchiveContext] = useState<'session' | 'domain'>('session');
   const [deletingArchiveIds, setDeletingArchiveIds] = useState<Record<string, true>>({});
+  const [deletingArchivedTabIds, setDeletingArchivedTabIds] = useState<Record<string, true>>({});
   const [successToast, setSuccessToast] = useState<string | null>(null);
   const successToastTimerRef = useRef<number | null>(null);
   
   const [hoveredTab, setHoveredTab] = useState<{ url: string, x: number, y: number } | null>(null);
   const [previewGroup, setPreviewGroup] = useState<DomainGroup | null>(null);
+  const [archivingTabIds, setArchivingTabIds] = useState<Record<number, true>>({});
+  const [closingTabIds, setClosingTabIds] = useState<Record<number, true>>({});
 
   const domainGroups = useMemo(() => {
     const filteredTabs = tabs.filter(t => 
@@ -115,6 +120,55 @@ function App() {
     await closeTabs(tabIdsToClose);
   };
 
+  /** Archives a single tab and then closes it after the fade-out animation. */
+  const archiveSingleTab = async (tab: TabInfo) => {
+    if (!tab.id) return;
+    if (archivedUrlSet.has(tab.url)) return;
+
+    setArchivingTabIds(prev => (prev[tab.id] ? prev : { ...prev, [tab.id]: true }));
+    try {
+      await archiveTab(tab);
+      showSuccessToast(`已归档 1 个标签页`);
+      window.setTimeout(async () => {
+        await closeArchivedTabs([tab]);
+        setArchivingTabIds(prev => {
+          if (!prev[tab.id]) return prev;
+          const next = { ...prev };
+          delete next[tab.id];
+          return next;
+        });
+      }, 420);
+    } catch (error) {
+      console.error('Failed to archive tab:', error);
+      setArchivingTabIds(prev => {
+        if (!prev[tab.id]) return prev;
+        const next = { ...prev };
+        delete next[tab.id];
+        return next;
+      });
+    }
+  };
+
+  /** Closes a single tab with the same fade-out motion as archiving. */
+  const closeSingleTabAnimated = async (tab: TabInfo) => {
+    if (!tab.id) return;
+    if (closingTabIds[tab.id]) return;
+
+    setClosingTabIds(prev => ({ ...prev, [tab.id]: true }));
+    window.setTimeout(async () => {
+      try {
+        if (removeTab) await removeTab(tab.id);
+      } finally {
+        setClosingTabIds(prev => {
+          if (!prev[tab.id]) return prev;
+          const next = { ...prev };
+          delete next[tab.id];
+          return next;
+        });
+      }
+    }, 420);
+  };
+
   /** Triggers a shatter animation, then deletes the archive after the animation finishes. */
   /** Triggers a fade-out animation, then deletes the archive after the animation finishes. */
   const requestDeleteArchive = (archiveId: string) => {
@@ -136,11 +190,37 @@ function App() {
     }, 420);
   };
 
+  /** Triggers a fade-out animation, then removes an archived single tab record. */
+  const requestDeleteArchivedTab = (id: string) => {
+    setDeletingArchivedTabIds(prev => (prev[id] ? prev : { ...prev, [id]: true }));
+
+    window.setTimeout(async () => {
+      try {
+        await removeArchivedTab(id);
+      } catch (error) {
+        console.error('Failed to delete archived tab:', error);
+      } finally {
+        setDeletingArchivedTabIds(prev => {
+          if (!prev[id]) return prev;
+          const next = { ...prev };
+          delete next[id];
+          return next;
+        });
+      }
+    }, 420);
+  };
+
   const filteredArchives = useMemo(() => {
     return archives.filter(a =>
         a.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [archives, searchQuery]);
+
+  const filteredArchivedTabs = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return archivedTabs;
+    return archivedTabs.filter(t => t.title.toLowerCase().includes(q) || t.url.toLowerCase().includes(q));
+  }, [archivedTabs, searchQuery]);
 
   const livePreviewGroup = useMemo(() => {
     if (!previewGroup) return null;
@@ -331,7 +411,7 @@ function App() {
                                 {group.tabs.map(tab => (
                                     <div 
                                         key={tab.id} 
-                                        className="p-2 hover:bg-gray-50 rounded group flex items-center justify-between gap-2 text-sm transition-colors relative"
+                                        className={`p-2 hover:bg-gray-50 rounded group flex items-center justify-between gap-2 text-sm transition-colors relative ${(archivingTabIds[tab.id] || closingTabIds[tab.id]) ? 'archive-delete-fade' : ''}`}
                                         onMouseEnter={(e) => {
                                             const rect = e.currentTarget.getBoundingClientRect();
                                             setHoveredTab({
@@ -352,16 +432,38 @@ function App() {
                                                 {tab.title}
                                             </div>
                                         </div>
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                if (removeTab) removeTab(tab.id);
-                                            }}
-                                            className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-all p-1 rounded hover:bg-red-50 shrink-0"
-                                            title="Close Tab"
-                                        >
-                                            <X className="w-3 h-3" />
-                                        </button>
+                                        <div className="flex items-center gap-1 shrink-0">
+                                            <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    void archiveSingleTab(tab);
+                                                }}
+                                                className={`opacity-0 group-hover:opacity-100 transition-all p-1 rounded shrink-0 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${archivedUrlSet.has(tab.url) ? 'text-green-600 bg-green-50' : 'text-gray-400 hover:text-blue-600 hover:bg-blue-50'}`}
+                                                title={archivedUrlSet.has(tab.url) ? 'Archived' : 'Archive tab'}
+                                                aria-label={archivedUrlSet.has(tab.url) ? 'Archived' : 'Archive tab'}
+                                                disabled={archivedUrlSet.has(tab.url) || !!archivingTabIds[tab.id]}
+                                            >
+                                                {archivedUrlSet.has(tab.url) ? (
+                                                    <Check className="w-3 h-3" />
+                                                ) : (
+                                                    <ArchiveIcon className="w-3 h-3" />
+                                                )}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    void closeSingleTabAnimated(tab);
+                                                }}
+                                                className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-all p-1 rounded hover:bg-red-50 shrink-0 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                                                title="Close Tab"
+                                                aria-label="Close Tab"
+                                                disabled={!!archivingTabIds[tab.id] || !!closingTabIds[tab.id]}
+                                            >
+                                                <X className="w-3 h-3" />
+                                            </button>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
@@ -452,6 +554,66 @@ function App() {
                             )}
                         </div>
                     ))}
+
+                    {archivedTabsLoading ? (
+                        <p className="text-gray-500">Loading archived tabs...</p>
+                    ) : filteredArchivedTabs.length === 0 ? null : (
+                        <div className="col-span-full mt-2">
+                            <div className="flex items-center justify-between mb-3">
+                                <h3 className="text-sm font-semibold text-gray-700">Archived Tabs</h3>
+                                <span className="text-xs text-gray-400">{filteredArchivedTabs.length}</span>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {filteredArchivedTabs.map(t => (
+                                    <div
+                                        key={t.id}
+                                        className={`relative bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex flex-col ${deletingArchivedTabIds[t.id] ? 'archive-delete-fade pointer-events-none' : ''}`}
+                                    >
+                                        <div className="flex justify-between items-start gap-3">
+                                            <div className="min-w-0">
+                                                <div className="flex items-center gap-2">
+                                                    {t.favIconUrl ? (
+                                                        <img src={t.favIconUrl} alt="" className="w-4 h-4" />
+                                                    ) : (
+                                                        <Globe className="w-4 h-4 text-gray-400" />
+                                                    )}
+                                                    <p className="font-semibold text-gray-800 text-sm truncate" title={t.title}>{t.title}</p>
+                                                </div>
+                                                <p className="text-xs text-gray-400 mt-1 truncate" title={t.url}>{t.domain}</p>
+                                            </div>
+                                            <div className="flex gap-1 shrink-0">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => restoreTab(t)}
+                                                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                                                    title="Restore Tab"
+                                                    aria-label="Restore Tab"
+                                                    disabled={!!deletingArchivedTabIds[t.id]}
+                                                >
+                                                    <RotateCcw className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => requestDeleteArchivedTab(t.id)}
+                                                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                                                    title="Delete Archived Tab"
+                                                    aria-label="Delete Archived Tab"
+                                                    disabled={!!deletingArchivedTabIds[t.id]}
+                                                >
+                                                    {deletingArchivedTabIds[t.id] ? (
+                                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                                    ) : (
+                                                        <Trash2 className="w-4 h-4" />
+                                                    )}
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <p className="text-xs text-gray-500 mt-3 truncate" title={t.url}>{t.url}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
         </div>
