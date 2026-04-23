@@ -21,6 +21,40 @@ chrome.runtime.onInstalled.addListener(() => {
   chrome.alarms.create('preview_cleanup', { periodInMinutes: 24 * 60 });
 });
 
+/** Opens the extension dashboard: focuses an existing tab, or creates a new one. */
+const openOrFocusDashboard = async (): Promise<{ action: 'focused' | 'created' }> => {
+  const dashboardIndexUrl = chrome.runtime.getURL('src/dashboard/index.html');
+
+  const allTabs = await chrome.tabs.query({});
+  const targetTab = allTabs.find(
+    (tab) =>
+      typeof tab.url === 'string' &&
+      tab.url.startsWith(dashboardIndexUrl) &&
+      typeof tab.id === 'number' &&
+      typeof tab.windowId === 'number',
+  );
+
+  if (targetTab?.id !== undefined && targetTab.windowId !== undefined) {
+    await chrome.windows.update(targetTab.windowId, { focused: true });
+    await chrome.tabs.update(targetTab.id, { active: true });
+
+    return { action: 'focused' };
+  }
+
+  await chrome.tabs.create({ url: dashboardIndexUrl });
+  return { action: 'created' };
+};
+
+chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+  if (message?.type !== 'OPEN_DASHBOARD') return;
+
+  openOrFocusDashboard()
+    .then((result) => sendResponse({ ok: true, ...result }))
+    .catch((error) => sendResponse({ ok: false, error: String(error) }));
+
+  return true;
+});
+
 // Alarm handler for periodic TTL cleanup
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === 'preview_cleanup') {

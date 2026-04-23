@@ -8,8 +8,18 @@ function App() {
 
   const totalDuplicates = duplicates.reduce((acc, group) => acc + group.tabs.length - 1, 0);
 
-  const handleOpenDashboard = () => {
-    chrome.tabs.create({ url: 'src/dashboard/index.html' });
+  /** Opens dashboard: focus existing dashboard tab or create a new one. */
+  const handleOpenDashboard = async () => {
+    void chrome.runtime.sendMessage({ type: 'OPEN_DASHBOARD' }).catch(async () => {
+      try {
+        await chrome.runtime.openOptionsPage();
+      } catch {
+        const dashboardUrl = chrome.runtime.getURL('src/dashboard/index.html');
+        await chrome.tabs.create({ url: dashboardUrl });
+      }
+    });
+
+    window.setTimeout(() => window.close(), 0);
   };
 
   const handleJumpToTab = async (tab: TabInfo) => {
