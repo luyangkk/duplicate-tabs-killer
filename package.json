@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "check": "tsc -b --noEmit",
     "test": "vitest run",
-    "gen:icons": "node scripts/generate-icons.mjs"
+    "gen:icons": "node scripts/generate-icons.mjs",
+    "zip": "npm run build && zip -r duplicate-tabs-killer-v$(node -p \"require('./package.json').version\").zip dist/ --exclude 'dist/.vite/*' --exclude 'dist/assets/*.map'"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.9",
