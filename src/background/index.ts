@@ -1,6 +1,11 @@
 import { savePreview, removePreview, cleanupExpiredPreviews } from './previewCache';
+import { saveArchivedTab } from '../utils/storage';
+import type { TabInfo } from '../utils/tabs';
 
 console.log('Duplicate Tabs Killer: Background service worker started.');
+
+const ARCHIVE_CURRENT_TAB_MENU_ID = 'archive_current_tab';
+const ROOT_MENU_ID = 'tabs_killer_root';
 
 // In-memory map of tabId -> url (needed because onRemoved doesn't provide the URL)
 const tabUrlMap = new Map<number, string>();
@@ -19,6 +24,98 @@ chrome.runtime.onInstalled.addListener(() => {
   console.log('Duplicate Tabs Killer installed.');
   // Setup daily cleanup alarm for expired previews
   chrome.alarms.create('preview_cleanup', { periodInMinutes: 24 * 60 });
+
+  ensureContextMenus();
+});
+
+chrome.runtime.onStartup?.addListener(() => {
+  ensureContextMenus();
+});
+
+/** Returns whether a tab URL is eligible for being archived via context menu. */
+const isArchivableUrl = (url: string): boolean => {
+  if (url.startsWith('chrome://')) return false;
+  if (url.startsWith('edge://')) return false;
+  if (url.startsWith('about:')) return false;
+  if (url.startsWith('devtools://')) return false;
+  if (url.startsWith('chrome-extension://')) return false;
+
+  return true;
+};
+
+/** Ensures the context menu items exist (idempotent). */
+const ensureContextMenus = (): void => {
+  if (typeof chrome === 'undefined' || !chrome.contextMenus?.create) return;
+
+  chrome.contextMenus.remove(ROOT_MENU_ID, () => {
+    void chrome.runtime.lastError;
+
+    chrome.contextMenus.remove(ARCHIVE_CURRENT_TAB_MENU_ID, () => {
+      void chrome.runtime.lastError;
+
+      chrome.contextMenus.create(
+        {
+          id: ROOT_MENU_ID,
+          title: 'Tabs killer',
+          documentUrlPatterns: ['http://*/*', 'https://*/*', 'file://*/*'],
+          contexts: ['page', 'link', 'selection', 'image', 'video', 'audio']
+        },
+        () => {
+          void chrome.runtime.lastError;
+
+          chrome.contextMenus.create(
+            {
+              id: ARCHIVE_CURRENT_TAB_MENU_ID,
+              parentId: ROOT_MENU_ID,
+              title: 'Archive current tab',
+              documentUrlPatterns: ['http://*/*', 'https://*/*', 'file://*/*'],
+              contexts: ['page', 'link', 'selection', 'image', 'video', 'audio']
+            },
+            () => {
+              void chrome.runtime.lastError;
+            }
+          );
+        }
+      );
+    });
+  });
+};
+
+ensureContextMenus();
+
+/** Archives the current tab into storage and then closes it. */
+const archiveAndCloseTab = async (tab: chrome.tabs.Tab): Promise<void> => {
+  if (typeof tab.id !== 'number') return;
+  if (typeof tab.url !== 'string' || typeof tab.title !== 'string') return;
+  if (!isArchivableUrl(tab.url)) return;
+
+  const tabInfo: TabInfo = {
+    ...tab,
+    id: tab.id,
+    url: tab.url,
+    title: tab.title
+  };
+
+  await saveArchivedTab(tabInfo);
+  await chrome.tabs.remove(tab.id);
+};
+
+chrome.contextMenus?.onClicked.addListener((info, tab) => {
+  if (info.menuItemId !== ARCHIVE_CURRENT_TAB_MENU_ID) return;
+
+  const work = async () => {
+    if (tab) {
+      await archiveAndCloseTab(tab);
+      return;
+    }
+
+    const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (activeTab) await archiveAndCloseTab(activeTab);
+  };
+
+  work().catch((error) => {
+    console.warn('[ContextMenu] Archive current tab failed:', error);
+  });
 });
 
 /** Opens the extension dashboard: focuses an existing tab, or creates a new one. */

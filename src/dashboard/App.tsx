@@ -9,29 +9,46 @@ import { LayoutGrid, Archive as ArchiveIcon, Search, Globe, Trash2, RotateCcw, X
 import { closeTabs, TabInfo } from '@/utils/tabs';
 import { DomainPreviewModal } from '@/components/DomainPreviewModal';
 
-const PreviewTooltip = ({ url, x, y }: { url: string | null, x: number, y: number }) => {
+/** Clamps a number within an inclusive range. */
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
+}
+
+/** Renders a screenshot preview tooltip near a hovered tab item, avoiding viewport overflow. */
+const PreviewTooltip = ({
+  url,
+  anchorRight,
+  anchorTop,
+  groupLeft,
+}: {
+  url: string | null;
+  anchorRight: number;
+  anchorTop: number;
+  groupLeft: number;
+}) => {
   const { preview, loading } = useTabPreview(url || undefined);
   
   if (!url) return null;
 
-  // Calculate position to keep within viewport
-  // Simple check to prevent overflow on right/bottom
+  const tooltipWidth = 272;
+  const tooltipMaxWidth = 320;
+  const offsetX = 20;
+  const offsetY = 10;
+  const viewportPadding = 8;
+
+  const canPlaceOnRight = window.innerWidth - anchorRight >= tooltipWidth + offsetX + viewportPadding;
+  const rawLeft = canPlaceOnRight ? anchorRight + offsetX : groupLeft - tooltipWidth - offsetX;
+  const left = clamp(rawLeft, viewportPadding, Math.max(viewportPadding, window.innerWidth - tooltipWidth - viewportPadding));
+
   const style: React.CSSProperties = {
-      left: x + 20,
-      top: y + 10,
-      maxWidth: '320px'
+    left,
+    top: anchorTop + offsetY,
+    maxWidth: `${tooltipMaxWidth}px`,
   };
 
-  // Adjust if too close to right edge
-  if (x > window.innerWidth - 350) {
-      style.left = 'auto';
-      style.right = window.innerWidth - x + 20;
-  }
-  
-  // Adjust if too close to bottom
-  if (y > window.innerHeight - 250) {
-      style.top = 'auto';
-      style.bottom = window.innerHeight - y + 10;
+  if (anchorTop > window.innerHeight - 250) {
+    style.top = 'auto';
+    style.bottom = window.innerHeight - anchorTop + offsetY;
   }
 
   return (
@@ -76,10 +93,11 @@ function App() {
   const [successToast, setSuccessToast] = useState<string | null>(null);
   const successToastTimerRef = useRef<number | null>(null);
   
-  const [hoveredTab, setHoveredTab] = useState<{ url: string, x: number, y: number } | null>(null);
+  const [hoveredTab, setHoveredTab] = useState<{ url: string, anchorRight: number, anchorTop: number, groupLeft: number } | null>(null);
   const [previewGroup, setPreviewGroup] = useState<DomainGroup | null>(null);
   const [archivingTabIds, setArchivingTabIds] = useState<Record<number, true>>({});
   const [closingTabIds, setClosingTabIds] = useState<Record<number, true>>({});
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
 
   const domainGroupsSorted = useMemo(() => {
     const filteredTabs = tabs.filter(t => 
@@ -241,6 +259,35 @@ function App() {
     );
   }, [archives, searchQuery]);
 
+  const archivesCounts = useMemo(() => {
+    const domains = new Set<string>();
+    let tabsCount = 0;
+
+    for (const archive of archives) {
+      tabsCount += archive.tabs.length;
+      const domainKeys = Object.keys(archive.domainCount ?? {});
+
+      if (domainKeys.length > 0) {
+        for (const domain of domainKeys) {
+          if (domain && domain !== 'unknown') domains.add(domain);
+        }
+      } else {
+        for (const tab of archive.tabs) {
+          try {
+            const domain = new URL(tab.url).hostname;
+            if (domain && domain !== 'unknown') domains.add(domain);
+          } catch {
+            void 0;
+          }
+        }
+      }
+    }
+
+    tabsCount += archivedTabs.length;
+
+    return { domainsCount: domains.size, tabsCount };
+  }, [archives, archivedTabs]);
+
   const filteredArchivedTabs = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     if (!q) return archivedTabs;
@@ -261,6 +308,22 @@ function App() {
       if (successToastTimerRef.current) window.clearTimeout(successToastTimerRef.current);
     };
   }, []);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const isFindShortcut = (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'f';
+      if (!isFindShortcut) return;
+      if (activeTab === 'settings') return;
+      if (isArchiveModalOpen || previewGroup) return;
+
+      event.preventDefault();
+      searchInputRef.current?.focus();
+      searchInputRef.current?.select();
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [activeTab, isArchiveModalOpen, previewGroup]);
 
   const handleCreateArchive = async () => {
     if (!archiveName.trim()) return;
@@ -333,8 +396,11 @@ function App() {
             >
                 <ArchiveIcon className="w-5 h-5" />
                 Archives
-                <span className="ml-auto bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full text-xs">
-                    {archives.length}
+                <span
+                    className="ml-auto bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full text-xs"
+                    title={`${archivesCounts.domainsCount} domains / ${archivesCounts.tabsCount} tabs`}
+                >
+                    {archivesCounts.domainsCount}/{archivesCounts.tabsCount}
                 </span>
             </button>
             <button
@@ -369,8 +435,29 @@ function App() {
                             placeholder="Search..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-64"
+                            onKeyDown={(e) => {
+                              if (e.key !== 'Escape') return;
+                              if (!searchQuery.trim()) return;
+                              e.preventDefault();
+                              setSearchQuery('');
+                            }}
+                            ref={searchInputRef}
+                            className="pl-10 pr-10 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-64"
                         />
+                        {searchQuery.trim().length > 0 && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setSearchQuery('');
+                                    searchInputRef.current?.focus();
+                                }}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                                title="Clear"
+                                aria-label="Clear"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                        )}
                     </div>
                     
                     {activeTab === 'current' && (
@@ -394,7 +481,7 @@ function App() {
                     {tabsLoading ? (
                         <p className="text-gray-500">Loading tabs...</p>
                     ) : displayDomainGroups.map((group) => (
-                        <div key={group.domain} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6 break-inside-avoid">
+                        <div key={group.domain} data-domain-group={group.domain} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6 break-inside-avoid">
                             <div className="p-4 border-b border-gray-50 bg-gray-50 flex justify-between items-center">
                                 <button
                                     type="button"
@@ -440,10 +527,13 @@ function App() {
                                         className={`p-2 hover:bg-gray-50 rounded group flex items-center justify-between gap-2 text-sm transition-colors relative ${(archivingTabIds[tab.id] || closingTabIds[tab.id]) ? 'archive-delete-fade' : ''}`}
                                         onMouseEnter={(e) => {
                                             const rect = e.currentTarget.getBoundingClientRect();
+                                            const groupEl = e.currentTarget.closest<HTMLElement>('[data-domain-group]');
+                                            const groupRect = groupEl?.getBoundingClientRect();
                                             setHoveredTab({
                                                 url: tab.url,
-                                                x: rect.right,
-                                                y: rect.top
+                                                anchorRight: rect.right,
+                                                anchorTop: rect.top,
+                                                groupLeft: groupRect?.left ?? rect.left,
                                             });
                                         }}
                                         onMouseLeave={() => setHoveredTab(null)}
@@ -498,6 +588,12 @@ function App() {
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="col-span-full">
+                        <div className="flex items-center justify-between mb-3">
+                            <h3 className="text-sm font-semibold text-gray-700">Archived Domains</h3>
+                            <span className="text-xs text-gray-400">{archivesLoading ? '...' : filteredArchives.length}</span>
+                        </div>
+                    </div>
                     {archivesLoading ? (
                         <p className="text-gray-500">Loading archives...</p>
                     ) : filteredArchives.length === 0 ? (
@@ -705,8 +801,9 @@ function App() {
       {hoveredTab && (
           <PreviewTooltip
               url={hoveredTab.url}
-              x={hoveredTab.x}
-              y={hoveredTab.y}
+              anchorRight={hoveredTab.anchorRight}
+              anchorTop={hoveredTab.anchorTop}
+              groupLeft={hoveredTab.groupLeft}
           />
       )}
 
