@@ -1,16 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Trash2, Database, Check } from 'lucide-react';
+
+function formatBytes(bytes: number) {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
 
 export function Settings() {
   const [cacheSize, setCacheSize] = useState<string>('Calculating...');
   const [clearing, setClearing] = useState(false);
   const [cleared, setCleared] = useState(false);
 
-  useEffect(() => {
-    calculateCacheSize();
-  }, []);
-
-  const calculateCacheSize = () => {
+  const calculateCacheSize = useCallback(() => {
     if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
       chrome.storage.local.getBytesInUse(null, (bytes) => {
         setCacheSize(formatBytes(bytes));
@@ -18,15 +22,11 @@ export function Settings() {
     } else {
       setCacheSize('Unknown');
     }
-  };
+  }, []);
 
-  const formatBytes = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
+  useEffect(() => {
+    calculateCacheSize();
+  }, [calculateCacheSize]);
 
   const handleClearCache = () => {
     setClearing(true);
