@@ -24,6 +24,18 @@ No server. No account. No external API calls. Just a Chrome extension.
 
 ---
 
+## Screenshots
+
+![Current Session — tabs grouped by domain](docs/screenshots/dashboard-current-session.jpg)
+
+![Domain detail — thumbnail preview grid](docs/screenshots/dashboard-domain-detail.jpg)
+
+![Hover preview — screenshot tooltip on tab](docs/screenshots/dashboard-tab-hover-preview.jpg)
+
+![Archives — saved sessions and individual tabs](docs/screenshots/dashboard-archives.jpg)
+
+---
+
 ## Installation
 
 **1. Download the latest release**
