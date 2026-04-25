@@ -3,6 +3,7 @@ import { useTabs } from '@/hooks/useTabs';
 import { useArchives } from '@/hooks/useArchives';
 import { useArchivedTabs } from '@/hooks/useArchivedTabs';
 import { useTabPreview } from '@/hooks/useTabPreview';
+import { useTheme } from '@/hooks/useTheme';
 import { Settings } from './Settings';
 import { groupTabsByDomain, DomainGroup } from '@/utils/grouping';
 import { LayoutGrid, Archive as ArchiveIcon, Search, Globe, Trash2, RotateCcw, X, Settings as SettingsIcon, Images, Copy, Loader2, Check } from 'lucide-react';
@@ -27,7 +28,7 @@ const PreviewTooltip = ({
   groupLeft: number;
 }) => {
   const { preview, loading } = useTabPreview(url || undefined);
-  
+
   if (!url) return null;
 
   const tooltipWidth = 272;
@@ -52,20 +53,20 @@ const PreviewTooltip = ({
   }
 
   return (
-    <div 
-        className="fixed z-50 bg-white p-2 rounded-lg shadow-xl border border-gray-200 pointer-events-none transition-all duration-200 animate-in fade-in zoom-in-95"
+    <div
+        className="fixed z-50 bg-white dark:bg-gray-800 p-2 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 pointer-events-none transition-all duration-200 animate-in fade-in zoom-in-95"
         style={style}
     >
         {loading ? (
-            <div className="w-64 h-40 bg-gray-100 animate-pulse rounded flex items-center justify-center text-gray-400 text-sm">
+            <div className="w-64 h-40 bg-gray-100 dark:bg-gray-700 animate-pulse rounded flex items-center justify-center text-gray-400 dark:text-gray-500 text-sm">
                 Loading...
             </div>
         ) : preview ? (
             <div className="space-y-2">
-                <img src={preview} alt="Preview" className="w-64 h-auto rounded shadow-sm border border-gray-100 object-cover bg-gray-50" />
+                <img src={preview} alt="Preview" className="w-64 h-auto rounded shadow-sm border border-gray-100 dark:border-gray-700 object-cover bg-gray-50 dark:bg-gray-700" />
             </div>
         ) : (
-            <div className="w-64 h-32 bg-gray-50 rounded flex flex-col items-center justify-center text-gray-400 text-xs text-center p-4 border border-dashed border-gray-200">
+            <div className="w-64 h-32 bg-gray-50 dark:bg-gray-700 rounded flex flex-col items-center justify-center text-gray-400 dark:text-gray-500 text-xs text-center p-4 border border-dashed border-gray-200 dark:border-gray-600">
                 <Globe className="w-8 h-8 mb-2 opacity-50" />
                 <span>No preview available yet</span>
                 <span className="text-[10px] mt-1 opacity-75">Activate tab to generate preview</span>
@@ -79,7 +80,8 @@ function App() {
   const { tabs, loading: tabsLoading, removeTab } = useTabs();
   const { archives, loading: archivesLoading, addArchive, removeArchive, restore } = useArchives();
   const { archivedTabs, archivedUrlSet, loading: archivedTabsLoading, archiveTab, removeArchivedTab, restoreTab } = useArchivedTabs();
-  
+  const { theme, setTheme } = useTheme();
+
   const [activeTab, setActiveTab] = useState<'current' | 'archives' | 'settings'>('current');
   const [searchQuery, setSearchQuery] = useState('');
   const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
@@ -92,7 +94,7 @@ function App() {
   const [deletingArchivedTabIds, setDeletingArchivedTabIds] = useState<Record<string, true>>({});
   const [successToast, setSuccessToast] = useState<string | null>(null);
   const successToastTimerRef = useRef<number | null>(null);
-  
+
   const [hoveredTab, setHoveredTab] = useState<{ url: string, anchorRight: number, anchorTop: number, groupLeft: number } | null>(null);
   const [previewGroup, setPreviewGroup] = useState<DomainGroup | null>(null);
   const [archivingTabIds, setArchivingTabIds] = useState<Record<number, true>>({});
@@ -100,8 +102,8 @@ function App() {
   const searchInputRef = useRef<HTMLInputElement | null>(null);
 
   const domainGroupsSorted = useMemo(() => {
-    const filteredTabs = tabs.filter(t => 
-        t.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    const filteredTabs = tabs.filter(t =>
+        t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         t.url.toLowerCase().includes(searchQuery.toLowerCase())
     );
     return groupTabsByDomain(filteredTabs);
@@ -212,7 +214,6 @@ function App() {
     }, 420);
   };
 
-  /** Triggers a shatter animation, then deletes the archive after the animation finishes. */
   /** Triggers a fade-out animation, then deletes the archive after the animation finishes. */
   const requestDeleteArchive = (archiveId: string) => {
     setDeletingArchiveIds(prev => (prev[archiveId] ? prev : { ...prev, [archiveId]: true }));
@@ -353,51 +354,52 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-800 font-sans">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 font-sans">
       {successToast && (
         <div className="fixed top-4 right-4 z-50">
-          <div className="bg-white border border-gray-100 shadow-lg rounded-xl px-4 py-2 text-sm text-gray-700 flex items-center gap-2">
+          <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-lg rounded-xl px-4 py-2 text-sm text-gray-700 dark:text-gray-200 flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-green-500" />
             <span>{successToast}</span>
           </div>
         </div>
       )}
+
       {/* Sidebar */}
-      <div className="fixed inset-y-0 left-0 w-64 bg-white border-r border-gray-200 flex flex-col z-20">
-        <div className="p-6 border-b border-gray-100">
+      <div className="fixed inset-y-0 left-0 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col z-20">
+        <div className="p-6 border-b border-gray-100 dark:border-gray-700">
             <h1 className="text-xl font-bold text-blue-600 flex items-center gap-2">
                 <Copy className="w-6 h-6" />
                 Tab Killer
             </h1>
         </div>
-        
+
         <nav className="flex-1 p-4 space-y-2">
             <button
                 onClick={() => setActiveTab('current')}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-                    activeTab === 'current' 
-                        ? 'bg-blue-50 text-blue-700' 
-                        : 'text-gray-600 hover:bg-gray-100'
+                    activeTab === 'current'
+                        ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400'
+                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                 }`}
             >
                 <LayoutGrid className="w-5 h-5" />
                 Current Tabs
-                <span className="ml-auto bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full text-xs">
+                <span className="ml-auto bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-2 py-0.5 rounded-full text-xs">
                     {tabs.length}
                 </span>
             </button>
             <button
                 onClick={() => setActiveTab('archives')}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-                    activeTab === 'archives' 
-                        ? 'bg-blue-50 text-blue-700' 
-                        : 'text-gray-600 hover:bg-gray-100'
+                    activeTab === 'archives'
+                        ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400'
+                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                 }`}
             >
                 <ArchiveIcon className="w-5 h-5" />
                 Archives
                 <span
-                    className="ml-auto bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full text-xs"
+                    className="ml-auto bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-2 py-0.5 rounded-full text-xs"
                     title={`${archivesCounts.domainsCount} domains / ${archivesCounts.tabsCount} tabs`}
                 >
                     {archivesCounts.domainsCount}/{archivesCounts.tabsCount}
@@ -406,9 +408,9 @@ function App() {
             <button
                 onClick={() => setActiveTab('settings')}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-                    activeTab === 'settings' 
-                        ? 'bg-blue-50 text-blue-700' 
-                        : 'text-gray-600 hover:bg-gray-100'
+                    activeTab === 'settings'
+                        ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400'
+                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                 }`}
             >
                 <SettingsIcon className="w-5 h-5" />
@@ -422,14 +424,14 @@ function App() {
         <div className="max-w-6xl mx-auto">
             {/* Header */}
             <div className="flex justify-between items-center mb-8">
-                <h2 className="text-2xl font-bold text-gray-900">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                     {activeTab === 'current' ? 'Current Session' : activeTab === 'archives' ? 'Saved Archives' : 'Settings'}
                 </h2>
-                
+
                 {activeTab !== 'settings' && (
                 <div className="flex items-center gap-4">
                     <div className="relative">
-                        <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                        <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" />
                         <input
                             type="text"
                             placeholder="Search..."
@@ -442,7 +444,7 @@ function App() {
                               setSearchQuery('');
                             }}
                             ref={searchInputRef}
-                            className="pl-10 pr-10 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-64"
+                            className="pl-10 pr-10 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-64 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
                         />
                         {searchQuery.trim().length > 0 && (
                             <button
@@ -451,7 +453,7 @@ function App() {
                                     setSearchQuery('');
                                     searchInputRef.current?.focus();
                                 }}
-                                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                                 title="Clear"
                                 aria-label="Clear"
                             >
@@ -459,7 +461,7 @@ function App() {
                             </button>
                         )}
                     </div>
-                    
+
                     {activeTab === 'current' && (
                         <button
                             onClick={() => openArchiveModal(tabs, 'Archive Current Session', '', 'session')}
@@ -475,14 +477,14 @@ function App() {
 
             {/* Content */}
             {activeTab === 'settings' ? (
-                <Settings />
+                <Settings theme={theme} setTheme={setTheme} />
             ) : activeTab === 'current' ? (
                 <div className="columns-1 md:columns-2 lg:columns-3 gap-6 [column-fill:_balance]">
                     {tabsLoading ? (
-                        <p className="text-gray-500">Loading tabs...</p>
+                        <p className="text-gray-500 dark:text-gray-400">Loading tabs...</p>
                     ) : displayDomainGroups.map((group) => (
-                        <div key={group.domain} data-domain-group={group.domain} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6 break-inside-avoid">
-                            <div className="p-4 border-b border-gray-50 bg-gray-50 flex justify-between items-center">
+                        <div key={group.domain} data-domain-group={group.domain} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-6 break-inside-avoid">
+                            <div className="p-4 border-b border-gray-50 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50 flex justify-between items-center">
                                 <button
                                     type="button"
                                     onClick={() => setPreviewGroup(group)}
@@ -492,28 +494,28 @@ function App() {
                                     {group.favicon ? (
                                         <img src={group.favicon} alt="" className="w-4 h-4" />
                                     ) : (
-                                        <Globe className="w-4 h-4 text-gray-400" />
+                                        <Globe className="w-4 h-4 text-gray-400 dark:text-gray-500" />
                                     )}
-                                    <h3 className="font-semibold text-gray-800 truncate" title={group.domain}>
+                                    <h3 className="font-semibold text-gray-800 dark:text-gray-100 truncate" title={group.domain}>
                                         {group.domain}
                                     </h3>
                                 </button>
                                 <div className="flex items-center gap-1.5 shrink-0">
                                     <button
                                         onClick={() => openArchiveModal(group.tabs, 'Archive Domain', group.domain, 'domain')}
-                                        className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                        className="p-1 text-gray-400 dark:text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
                                         title="Archive this domain"
                                     >
                                         <ArchiveIcon className="w-3.5 h-3.5" />
                                     </button>
                                     <button
                                         onClick={() => setPreviewGroup(group)}
-                                        className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                        className="p-1 text-gray-400 dark:text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
                                         title="View screenshot previews"
                                     >
                                         <Images className="w-3.5 h-3.5" />
                                     </button>
-                                    <span className="text-xs font-medium text-gray-500 bg-white px-2 py-0.5 rounded border border-gray-100">
+                                    <span className="text-xs font-medium text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-700 px-2 py-0.5 rounded border border-gray-100 dark:border-gray-600">
                                         {group.tabs.length}
                                     </span>
                                 </div>
@@ -522,9 +524,9 @@ function App() {
                                 className={`overflow-y-auto p-2 ${group.tabs.length === maxDomainGroupTabs ? 'max-h-[calc(100vh-260px)]' : 'max-h-[360px]'}`}
                             >
                                 {group.tabs.map(tab => (
-                                    <div 
-                                        key={tab.id} 
-                                        className={`p-2 hover:bg-gray-50 rounded group flex items-center justify-between gap-2 text-sm transition-colors relative ${(archivingTabIds[tab.id] || closingTabIds[tab.id]) ? 'archive-delete-fade' : ''}`}
+                                    <div
+                                        key={tab.id}
+                                        className={`p-2 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded group flex items-center justify-between gap-2 text-sm transition-colors relative ${(archivingTabIds[tab.id] || closingTabIds[tab.id]) ? 'archive-delete-fade' : ''}`}
                                         onMouseEnter={(e) => {
                                             const rect = e.currentTarget.getBoundingClientRect();
                                             const groupEl = e.currentTarget.closest<HTMLElement>('[data-domain-group]');
@@ -540,9 +542,9 @@ function App() {
                                     >
                                         <div className="flex items-center gap-2 flex-1 min-w-0">
                                             <div className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0" />
-                                            <div 
+                                            <div
                                                 onClick={() => handleJumpToTab(tab)}
-                                                className="text-gray-600 hover:text-blue-600 truncate cursor-pointer transition-colors"
+                                                className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 truncate cursor-pointer transition-colors"
                                                 title={tab.title}
                                             >
                                                 {tab.title}
@@ -555,7 +557,7 @@ function App() {
                                                     e.stopPropagation();
                                                     void archiveSingleTab(tab);
                                                 }}
-                                                className={`opacity-0 group-hover:opacity-100 transition-all p-1 rounded shrink-0 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${archivedUrlSet.has(tab.url) ? 'text-green-600 bg-green-50' : 'text-gray-400 hover:text-blue-600 hover:bg-blue-50'}`}
+                                                className={`opacity-0 group-hover:opacity-100 transition-all p-1 rounded shrink-0 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${archivedUrlSet.has(tab.url) ? 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20' : 'text-gray-400 dark:text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20'}`}
                                                 title={archivedUrlSet.has(tab.url) ? 'Archived' : 'Archive tab'}
                                                 aria-label={archivedUrlSet.has(tab.url) ? 'Archived' : 'Archive tab'}
                                                 disabled={archivedUrlSet.has(tab.url) || !!archivingTabIds[tab.id]}
@@ -572,7 +574,7 @@ function App() {
                                                     e.stopPropagation();
                                                     void closeSingleTabAnimated(tab);
                                                 }}
-                                                className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-all p-1 rounded hover:bg-red-50 shrink-0 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                                                className="opacity-0 group-hover:opacity-100 text-gray-400 dark:text-gray-500 hover:text-red-500 transition-all p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 shrink-0 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                                                 title="Close Tab"
                                                 aria-label="Close Tab"
                                                 disabled={!!archivingTabIds[tab.id] || !!closingTabIds[tab.id]}
@@ -590,41 +592,41 @@ function App() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <div className="col-span-full">
                         <div className="flex items-center justify-between mb-3">
-                            <h3 className="text-sm font-semibold text-gray-700">Archived Domains</h3>
-                            <span className="text-xs text-gray-400">{archivesLoading ? '...' : filteredArchives.length}</span>
+                            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200">Archived Domains</h3>
+                            <span className="text-xs text-gray-400 dark:text-gray-500">{archivesLoading ? '...' : filteredArchives.length}</span>
                         </div>
                     </div>
                     {archivesLoading ? (
-                        <p className="text-gray-500">Loading archives...</p>
+                        <p className="text-gray-500 dark:text-gray-400">Loading archives...</p>
                     ) : filteredArchives.length === 0 ? (
-                        <div className="col-span-full text-center py-12 text-gray-500">
+                        <div className="col-span-full text-center py-12 text-gray-500 dark:text-gray-400">
                             No archives found.
                         </div>
                     ) : filteredArchives.map((archive) => (
                         <div
                             key={archive.id}
                             data-archive-card={archive.id}
-                            className={`relative bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex flex-col h-full ${deletingArchiveIds[archive.id] ? 'archive-delete-fade pointer-events-none' : ''}`}
+                            className={`relative bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-5 flex flex-col h-full ${deletingArchiveIds[archive.id] ? 'archive-delete-fade pointer-events-none' : ''}`}
                         >
                             <div className="flex justify-between items-start mb-4">
                                 <div>
-                                    <h3 className="font-bold text-gray-800 text-lg mb-1">{archive.name}</h3>
-                                    <p className="text-xs text-gray-400">
+                                    <h3 className="font-bold text-gray-800 dark:text-gray-100 text-lg mb-1">{archive.name}</h3>
+                                    <p className="text-xs text-gray-400 dark:text-gray-500">
                                         {new Date(archive.createdAt).toLocaleString()}
                                     </p>
                                 </div>
                                 <div className="flex gap-1">
-                                    <button 
+                                    <button
                                         onClick={() => restore(archive)}
-                                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                        className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
                                         title="Restore Session"
                                         disabled={!!deletingArchiveIds[archive.id]}
                                     >
                                         <RotateCcw className="w-4 h-4" />
                                     </button>
-                                    <button 
+                                    <button
                                         onClick={() => requestDeleteArchive(archive.id)}
-                                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                        className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                                         title="Delete Archive"
                                         disabled={!!deletingArchiveIds[archive.id]}
                                     >
@@ -636,10 +638,10 @@ function App() {
                                     </button>
                                 </div>
                             </div>
-                            
+
                             <div className="flex-1">
-                                <div className="text-sm text-gray-600 mb-3 flex items-center gap-2">
-                                    <LayoutGrid className="w-4 h-4 text-gray-400" />
+                                <div className="text-sm text-gray-600 dark:text-gray-300 mb-3 flex items-center gap-2">
+                                    <LayoutGrid className="w-4 h-4 text-gray-400 dark:text-gray-500" />
                                     {archive.tabs.length} tabs total
                                 </div>
                                 <div className="flex flex-wrap gap-2">
@@ -647,18 +649,18 @@ function App() {
                                         .sort(([,a], [,b]) => b - a)
                                         .slice(0, 3)
                                         .map(([domain, count]) => (
-                                            <span key={domain} className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded inline-flex items-center gap-1.5">
+                                            <span key={domain} className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-1 rounded inline-flex items-center gap-1.5">
                                                 {archive.domainFavicons?.[domain] ? (
                                                     <img src={archive.domainFavicons[domain]} alt="" className="w-3 h-3" />
                                                 ) : (
-                                                    <Globe className="w-3 h-3 text-gray-400" />
+                                                    <Globe className="w-3 h-3 text-gray-400 dark:text-gray-500" />
                                                 )}
                                                 {domain} ({count})
                                             </span>
                                         ))
                                     }
                                     {Object.keys(archive.domainCount).length > 3 && (
-                                        <span className="text-xs text-gray-400 px-1 py-1">
+                                        <span className="text-xs text-gray-400 dark:text-gray-500 px-1 py-1">
                                             +{Object.keys(archive.domainCount).length - 3} more
                                         </span>
                                     )}
@@ -667,8 +669,8 @@ function App() {
 
                             {deletingArchiveIds[archive.id] && (
                                 <div className="absolute inset-0 z-10 pointer-events-none">
-                                    <div className="absolute inset-0 bg-white/40" />
-                                    <div className="absolute top-3 right-3 flex items-center gap-2 rounded-full bg-white/80 px-2.5 py-1 text-xs text-gray-600 shadow-sm border border-gray-100">
+                                    <div className="absolute inset-0 bg-white/40 dark:bg-gray-900/40" />
+                                    <div className="absolute top-3 right-3 flex items-center gap-2 rounded-full bg-white/80 dark:bg-gray-800/80 px-2.5 py-1 text-xs text-gray-600 dark:text-gray-300 shadow-sm border border-gray-100 dark:border-gray-700">
                                         <Loader2 className="w-3.5 h-3.5 animate-spin text-red-500" />
                                         删除中…
                                     </div>
@@ -678,18 +680,18 @@ function App() {
                     ))}
 
                     {archivedTabsLoading ? (
-                        <p className="text-gray-500">Loading archived tabs...</p>
+                        <p className="text-gray-500 dark:text-gray-400">Loading archived tabs...</p>
                     ) : filteredArchivedTabs.length === 0 ? null : (
                         <div className="col-span-full mt-2">
                             <div className="flex items-center justify-between mb-3">
-                                <h3 className="text-sm font-semibold text-gray-700">Archived Tabs</h3>
-                                <span className="text-xs text-gray-400">{filteredArchivedTabs.length}</span>
+                                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200">Archived Tabs</h3>
+                                <span className="text-xs text-gray-400 dark:text-gray-500">{filteredArchivedTabs.length}</span>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {filteredArchivedTabs.map(t => (
                                     <div
                                         key={t.id}
-                                        className={`relative bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex flex-col ${deletingArchivedTabIds[t.id] ? 'archive-delete-fade pointer-events-none' : ''}`}
+                                        className={`relative bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-5 flex flex-col ${deletingArchivedTabIds[t.id] ? 'archive-delete-fade pointer-events-none' : ''}`}
                                     >
                                         <div className="flex justify-between items-start gap-3">
                                             <div className="min-w-0">
@@ -697,17 +699,17 @@ function App() {
                                                     {t.favIconUrl ? (
                                                         <img src={t.favIconUrl} alt="" className="w-4 h-4" />
                                                     ) : (
-                                                        <Globe className="w-4 h-4 text-gray-400" />
+                                                        <Globe className="w-4 h-4 text-gray-400 dark:text-gray-500" />
                                                     )}
-                                                    <p className="font-semibold text-gray-800 text-sm truncate" title={t.title}>{t.title}</p>
+                                                    <p className="font-semibold text-gray-800 dark:text-gray-100 text-sm truncate" title={t.title}>{t.title}</p>
                                                 </div>
-                                                <p className="text-xs text-gray-400 mt-1 truncate" title={t.url}>{t.domain}</p>
+                                                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 truncate" title={t.url}>{t.domain}</p>
                                             </div>
                                             <div className="flex gap-1 shrink-0">
                                                 <button
                                                     type="button"
                                                     onClick={() => restoreTab(t)}
-                                                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                                                    className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                                                     title="Restore Tab"
                                                     aria-label="Restore Tab"
                                                     disabled={!!deletingArchivedTabIds[t.id]}
@@ -717,7 +719,7 @@ function App() {
                                                 <button
                                                     type="button"
                                                     onClick={() => requestDeleteArchivedTab(t.id)}
-                                                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                                                    className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                                                     title="Delete Archived Tab"
                                                     aria-label="Delete Archived Tab"
                                                     disabled={!!deletingArchivedTabIds[t.id]}
@@ -730,7 +732,7 @@ function App() {
                                                 </button>
                                             </div>
                                         </div>
-                                        <p className="text-xs text-gray-500 mt-3 truncate" title={t.url}>{t.url}</p>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-3 truncate" title={t.url}>{t.url}</p>
                                     </div>
                                 ))}
                             </div>
@@ -744,36 +746,36 @@ function App() {
       {/* Archive Modal */}
       {isArchiveModalOpen && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-            <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 animate-in fade-in zoom-in duration-200">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6 animate-in fade-in zoom-in duration-200">
                 <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-xl font-bold text-gray-900">{archiveTitle || 'Archive'}</h3>
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">{archiveTitle || 'Archive'}</h3>
                     <button
                         onClick={() => {
                             setIsArchiveModalOpen(false);
                             setArchiveTabs(null);
                             setArchiveTitle('');
                         }}
-                        className="text-gray-400 hover:text-gray-600"
+                        className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
                     >
                         <X className="w-5 h-5" />
                     </button>
                 </div>
-                
+
                 <div className="mb-6">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Session Name</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Session Name</label>
                     <input
                         type="text"
                         value={archiveName}
                         onChange={(e) => setArchiveName(e.target.value)}
                         placeholder="e.g., Research for Project X"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
                         autoFocus
                     />
-                    <p className="mt-2 text-sm text-gray-500">
+                    <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
                         This will save {archiveTabs?.length ?? tabs.length} tabs.
                     </p>
                 </div>
-                
+
                 <div className="flex justify-end gap-3">
                     <button
                         onClick={() => {
@@ -781,7 +783,7 @@ function App() {
                             setArchiveTabs(null);
                             setArchiveTitle('');
                         }}
-                        className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg font-medium"
+                        className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium"
                     >
                         Cancel
                     </button>
