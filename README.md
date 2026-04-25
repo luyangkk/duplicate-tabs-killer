@@ -110,4 +110,4 @@ Background service worker
 
 ## License
 
-For learning and personal use only.
+[MIT](LICENSE)
