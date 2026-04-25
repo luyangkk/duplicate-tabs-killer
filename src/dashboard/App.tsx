@@ -171,7 +171,7 @@ function App() {
     setArchivingTabIds(prev => (prev[tab.id] ? prev : { ...prev, [tab.id]: true }));
     try {
       await archiveTab(tab);
-      showSuccessToast(`已归档 1 个标签页`);
+      showSuccessToast(`Archived 1 tab`);
       window.setTimeout(async () => {
         await closeArchivedTabs([tab]);
         setArchivingTabIds(prev => {
@@ -333,9 +333,9 @@ function App() {
     await addArchive(archiveName, tabsToArchive);
     await closeArchivedTabs(tabsToArchive);
     if (archiveContext === 'domain') {
-      showSuccessToast(`已归档「${archiveName}」的 ${tabsToArchive.length} 个标签页`);
+      showSuccessToast(`Archived ${tabsToArchive.length} tabs from "${archiveName}"`);
     } else {
-      showSuccessToast(`已归档「${archiveName}」(${tabsToArchive.length} 个标签页)`);
+      showSuccessToast(`Archived "${archiveName}" (${tabsToArchive.length} tabs)`);
     }
     setArchiveName('');
     setArchiveTabs(null);
@@ -672,7 +672,7 @@ function App() {
                                     <div className="absolute inset-0 bg-white/40 dark:bg-gray-900/40" />
                                     <div className="absolute top-3 right-3 flex items-center gap-2 rounded-full bg-white/80 dark:bg-gray-800/80 px-2.5 py-1 text-xs text-gray-600 dark:text-gray-300 shadow-sm border border-gray-100 dark:border-gray-700">
                                         <Loader2 className="w-3.5 h-3.5 animate-spin text-red-500" />
-                                        删除中…
+                                        Deleting…
                                     </div>
                                 </div>
                             )}

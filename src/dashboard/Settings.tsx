@@ -12,9 +12,9 @@ function formatBytes(bytes: number) {
 }
 
 const THEME_OPTIONS = [
-  { value: 'light' as const, label: '浅色', icon: Sun },
-  { value: 'system' as const, label: '跟随系统', icon: Monitor },
-  { value: 'dark' as const, label: '深色', icon: Moon },
+  { value: 'light' as const, label: 'Light', icon: Sun },
+  { value: 'system' as const, label: 'System', icon: Monitor },
+  { value: 'dark' as const, label: 'Dark', icon: Moon },
 ];
 
 interface SettingsProps {
@@ -76,10 +76,10 @@ export function Settings({ theme, setTheme }: SettingsProps) {
         <div className="p-6 border-b border-gray-50 dark:border-gray-700">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
             <Sun className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-            主题
+            Theme
           </h2>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            选择界面显示主题，或跟随系统自动切换
+            Choose a display theme, or follow system preferences
           </p>
         </div>
         <div className="p-6">
