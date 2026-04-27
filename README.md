@@ -27,10 +27,11 @@ No server. No account. No external API calls. Just a Chrome extension.
 ## Screenshots
 
 <p align="center">
-  <img src="docs/screenshots/dashboard-current-session.jpg" alt="Current Session — tabs grouped by domain" width="24%" />
-  <img src="docs/screenshots/dashboard-domain-detail.jpg" alt="Domain detail — thumbnail preview grid" width="24%" />
-  <img src="docs/screenshots/dashboard-tab-hover-preview.jpg" alt="Hover preview — screenshot tooltip on tab" width="24%" />
-  <img src="docs/screenshots/dashboard-archives.jpg" alt="Archives — saved sessions and individual tabs" width="24%" />
+  <img src="docs/screenshots/dashboard-current-session.jpg" alt="Current Session — tabs grouped by domain" width="49%" />
+  <img src="docs/screenshots/dashboard-domain-detail.jpg" alt="Domain detail — thumbnail preview grid" width="49%" />
+  <br />
+  <img src="docs/screenshots/dashboard-tab-hover-preview.jpg" alt="Hover preview — screenshot tooltip on tab" width="49%" />
+  <img src="docs/screenshots/dashboard-archives.jpg" alt="Archives — saved sessions and individual tabs" width="49%" />
 </p>
 
 ---
