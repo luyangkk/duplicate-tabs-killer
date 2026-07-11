@@ -1,18 +1,21 @@
 import React from 'react';
 import { useTabs } from '@/hooks/useTabs';
+import { useArchivedTabs } from '@/hooks/useArchivedTabs';
 import { useTheme } from '@/hooks/useTheme';
 import { TabInfo } from '@/utils/tabs';
 import { Trash2, Copy, LayoutDashboard, ExternalLink } from 'lucide-react';
 
 function App() {
   const { tabs, duplicates, loading, closeDuplicateTabs, closeDuplicateGroup } = useTabs();
+  const { archivedTabs } = useArchivedTabs();
   useTheme();
 
   const totalDuplicates = duplicates.reduce((acc, group) => acc + group.tabs.length - 1, 0);
 
-  /** Opens dashboard: focus existing dashboard tab or create a new one. */
-  const handleOpenDashboard = async () => {
-    void chrome.runtime.sendMessage({ type: 'OPEN_DASHBOARD' }).catch(async () => {
+  /** Opens dashboard: focus existing dashboard tab or create a new one.
+   *  Optionally targets a specific view (e.g. 'archives') via the background message. */
+  const handleOpenDashboard = async (view?: 'archives') => {
+    void chrome.runtime.sendMessage({ type: 'OPEN_DASHBOARD', view }).catch(async () => {
       try {
         await chrome.runtime.openOptionsPage();
       } catch {
@@ -42,7 +45,7 @@ function App() {
             Tab Killer
         </h1>
         <button
-            onClick={handleOpenDashboard}
+            onClick={() => handleOpenDashboard()}
             className="text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
             title="Open Dashboard"
         >
@@ -92,6 +95,14 @@ function App() {
                 <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">Groups</div>
                 <div className="text-xl font-bold text-gray-900 dark:text-white">{duplicates.length}</div>
             </div>
+            <button
+                onClick={() => handleOpenDashboard('archives')}
+                className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 text-left hover:shadow-md hover:border-blue-200 dark:hover:border-blue-800 transition-all cursor-pointer"
+                title="View archived tabs in dashboard"
+            >
+                <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">Archived</div>
+                <div className="text-xl font-bold text-gray-900 dark:text-white">{archivedTabs.length}</div>
+            </button>
         </div>
 
         {/* Duplicate List Preview */}
