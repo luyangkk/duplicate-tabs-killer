@@ -9,6 +9,7 @@ import { groupTabsByDomain, DomainGroup } from '@/utils/grouping';
 import { LayoutGrid, Archive as ArchiveIcon, Search, Globe, Trash2, RotateCcw, X, Settings as SettingsIcon, Images, Copy, Loader2, Check } from 'lucide-react';
 import { closeTabs, TabInfo } from '@/utils/tabs';
 import { DomainPreviewModal } from '@/components/DomainPreviewModal';
+import { viewFromHash, type DashboardView } from '@/dashboard/viewFromHash';
 
 /** Clamps a number within an inclusive range. */
 function clamp(value: number, min: number, max: number) {
@@ -82,7 +83,7 @@ function App() {
   const { archivedTabs, archivedUrlSet, loading: archivedTabsLoading, archiveTab, removeArchivedTab, restoreTab } = useArchivedTabs();
   const { theme, setTheme } = useTheme();
 
-  const [activeTab, setActiveTab] = useState<'current' | 'archives' | 'settings'>('current');
+  const [activeTab, setActiveTab] = useState<DashboardView>(() => viewFromHash(window.location.hash));
   const [searchQuery, setSearchQuery] = useState('');
   const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
   const [archiveName, setArchiveName] = useState('');
@@ -310,6 +311,13 @@ function App() {
     };
   }, []);
 
+  /** Listens for URL hash changes and maps them to the active view (used when popup focuses an already-open dashboard). */
+  useEffect(() => {
+    const onHashChange = () => setActiveTab(viewFromHash(window.location.hash));
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
+  }, []);
+
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       const isFindShortcut = (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'f';
@@ -344,6 +352,20 @@ function App() {
     setIsArchiveModalOpen(false);
   };
 
+  /** Switches the active view and keeps the URL hash in sync, so cross-page
+   *  navigation (e.g. popup → archives) stays reliable even after in-app nav. */
+  const navigateTo = (view: DashboardView) => {
+    setActiveTab(view);
+    const hash = view === 'archives' ? '#archives' : '';
+    if (window.location.hash !== hash) {
+      window.history.replaceState(
+        null,
+        '',
+        `${window.location.pathname}${window.location.search}${hash}`,
+      );
+    }
+  };
+
   const handleJumpToTab = async (tab: TabInfo) => {
     if (tab.id) {
         await chrome.tabs.update(tab.id, { active: true });
@@ -375,7 +397,7 @@ function App() {
 
         <nav className="flex-1 p-4 space-y-2">
             <button
-                onClick={() => setActiveTab('current')}
+                onClick={() => navigateTo('current')}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
                     activeTab === 'current'
                         ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400'
@@ -389,7 +411,7 @@ function App() {
                 </span>
             </button>
             <button
-                onClick={() => setActiveTab('archives')}
+                onClick={() => navigateTo('archives')}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
                     activeTab === 'archives'
                         ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400'
@@ -406,7 +428,7 @@ function App() {
                 </span>
             </button>
             <button
-                onClick={() => setActiveTab('settings')}
+                onClick={() => navigateTo('settings')}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
                     activeTab === 'settings'
                         ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400'

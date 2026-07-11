@@ -118,9 +118,13 @@ chrome.contextMenus?.onClicked.addListener((info, tab) => {
   });
 });
 
-/** Opens the extension dashboard: focuses an existing tab, or creates a new one. */
-const openOrFocusDashboard = async (): Promise<{ action: 'focused' | 'created' }> => {
+/** Opens the extension dashboard: focuses an existing tab, or creates a new one.
+ *  When `view` is 'archives', the dashboard opens on the Archives view via URL hash. */
+const openOrFocusDashboard = async (
+  view?: 'archives',
+): Promise<{ action: 'focused' | 'created' }> => {
   const dashboardIndexUrl = chrome.runtime.getURL('src/dashboard/index.html');
+  const targetUrl = view === 'archives' ? `${dashboardIndexUrl}#archives` : dashboardIndexUrl;
 
   const allTabs = await chrome.tabs.query({});
   const targetTab = allTabs.find(
@@ -133,19 +137,19 @@ const openOrFocusDashboard = async (): Promise<{ action: 'focused' | 'created' }
 
   if (targetTab?.id !== undefined && targetTab.windowId !== undefined) {
     await chrome.windows.update(targetTab.windowId, { focused: true });
-    await chrome.tabs.update(targetTab.id, { active: true });
+    await chrome.tabs.update(targetTab.id, { active: true, url: targetUrl });
 
     return { action: 'focused' };
   }
 
-  await chrome.tabs.create({ url: dashboardIndexUrl });
+  await chrome.tabs.create({ url: targetUrl });
   return { action: 'created' };
 };
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message?.type !== 'OPEN_DASHBOARD') return;
 
-  openOrFocusDashboard()
+  openOrFocusDashboard(message.view)
     .then((result) => sendResponse({ ok: true, ...result }))
     .catch((error) => sendResponse({ ok: false, error: String(error) }));
 
