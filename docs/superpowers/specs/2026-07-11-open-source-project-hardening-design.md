@@ -131,11 +131,13 @@ jobs:
   the `1.2.0` release.
 - Backfilled release history, derived from git history (concise, no fabricated
   detail):
-  - `[1.2.0]` — this release; open-source hardening (CI, community docs,
-    templates, governance, CHANGELOG, README badges). Include any user-facing
-    changes already committed since 1.1.0 if present in git history.
-  - `[1.1.0]` — Popup archived-tabs count display + Dashboard hash-route
-    navigation, and related recent work.
+  - `[1.2.0]` — this release, two parts:
+    1. Popup archived-tabs count display + Dashboard hash-route navigation, and
+       related recent work (commits since 1.1.0).
+    2. Open-source hardening: CI, community docs, templates, governance,
+       CHANGELOG, README badges.
+  - `[1.1.0]` — previous published release (entries kept concise; derived from
+    git history at implementation time).
   - `[1.0.0]` — initial release: duplicate detection, domain grouping,
     screenshot previews, session archive/restore.
 - Version compare links at the bottom pointing to GitHub compare URLs under
