@@ -352,6 +352,20 @@ function App() {
     setIsArchiveModalOpen(false);
   };
 
+  /** Switches the active view and keeps the URL hash in sync, so cross-page
+   *  navigation (e.g. popup → archives) stays reliable even after in-app nav. */
+  const navigateTo = (view: DashboardView) => {
+    setActiveTab(view);
+    const hash = view === 'archives' ? '#archives' : '';
+    if (window.location.hash !== hash) {
+      window.history.replaceState(
+        null,
+        '',
+        `${window.location.pathname}${window.location.search}${hash}`,
+      );
+    }
+  };
+
   const handleJumpToTab = async (tab: TabInfo) => {
     if (tab.id) {
         await chrome.tabs.update(tab.id, { active: true });
@@ -383,7 +397,7 @@ function App() {
 
         <nav className="flex-1 p-4 space-y-2">
             <button
-                onClick={() => setActiveTab('current')}
+                onClick={() => navigateTo('current')}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
                     activeTab === 'current'
                         ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400'
@@ -397,7 +411,7 @@ function App() {
                 </span>
             </button>
             <button
-                onClick={() => setActiveTab('archives')}
+                onClick={() => navigateTo('archives')}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
                     activeTab === 'archives'
                         ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400'
@@ -414,7 +428,7 @@ function App() {
                 </span>
             </button>
             <button
-                onClick={() => setActiveTab('settings')}
+                onClick={() => navigateTo('settings')}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
                     activeTab === 'settings'
                         ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400'

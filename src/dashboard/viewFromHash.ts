@@ -1,10 +1,11 @@
-/** Dashboard 顶部可切换的视图标识。 */
+/** Switchable views shown at the top of the dashboard. */
 export type DashboardView = 'current' | 'archives' | 'settings';
 
 /**
- * 将 location.hash 映射为 dashboard 的初始视图。
- * 仅识别 '#archives'，其余（空 hash 或未知 hash）一律回落到 'current'。
- * settings 视图无外部入口，不纳入 hash 映射。
+ * Maps location.hash to the dashboard's initial view.
+ * Only '#archives' is recognized; anything else (empty or unknown hash)
+ * falls back to 'current'. The settings view has no external entry point,
+ * so it is not part of the hash mapping.
  */
 export function viewFromHash(hash: string): DashboardView {
   return hash === '#archives' ? 'archives' : 'current';
