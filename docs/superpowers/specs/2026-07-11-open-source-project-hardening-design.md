@@ -29,13 +29,15 @@ common "excellent open-source project" expectations — without touching any
 
 ### Repository facts
 - Owner/Repo: `luyangkk/duplicate-tabs-killer`
-- Latest release: `v1.1.0`
+- Latest published release: `v1.1.0`
+- Version to release with this work: `1.2.0` (bump `package.json` from 1.1.0)
 - Contact email (Code of Conduct / Security): `luyangkk@gmail.com`
 - GitHub username (CODEOWNERS): `@luyangkk`
 
 ### Explicit non-goals
 - No changes to any file under `src/`.
-- No changes to build config (`vite.config.ts`, `tsconfig.json`, etc.).
+- No changes to build config (`vite.config.ts`, `tsconfig.json`, etc.). The only
+  edit to `package.json` is the version bump 1.1.0 → 1.2.0.
 - No Prettier / `.prettierrc`.
 - No release automation workflow (deferred to a future iteration).
 - README body stays unchanged; only a badge row is **added** at the top.
@@ -49,7 +51,7 @@ common "excellent open-source project" expectations — without touching any
 | Templates     | `.github/ISSUE_TEMPLATE/bug_report.yml`, `feature_request.yml`, `config.yml`, `.github/PULL_REQUEST_TEMPLATE.md` |
 | Governance    | `.github/CODEOWNERS`, `.github/dependabot.yml`                                             |
 | Conventions   | `.editorconfig`, `.nvmrc`                                                                   |
-| Versioning    | `CHANGELOG.md`                                                                              |
+| Versioning    | `CHANGELOG.md`, `package.json` version bump 1.1.0 → 1.2.0                  |
 | README        | Badge row added at the top                                                                  |
 
 ## 4. Detailed Design
@@ -125,8 +127,13 @@ jobs:
 
 - Format: **Keep a Changelog** + **Semantic Versioning**.
 - Top `[Unreleased]` section for future accumulation.
+- `package.json` version bumped from `1.1.0` to **`1.2.0`**; this work ships as
+  the `1.2.0` release.
 - Backfilled release history, derived from git history (concise, no fabricated
   detail):
+  - `[1.2.0]` — this release; open-source hardening (CI, community docs,
+    templates, governance, CHANGELOG, README badges). Include any user-facing
+    changes already committed since 1.1.0 if present in git history.
   - `[1.1.0]` — Popup archived-tabs count display + Dashboard hash-route
     navigation, and related recent work.
   - `[1.0.0]` — initial release: duplicate detection, domain grouping,
