@@ -1,0 +1,48 @@
+name: Bug report
+description: Report a problem with the extension
+labels: [bug]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: A clear description of the bug and the actual behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open the popup
+        2. Click "Close All Duplicates"
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: input
+    id: chrome-version
+    attributes:
+      label: Chrome version
+      placeholder: e.g. 126.0.6478.127
+    validations:
+      required: true
+  - type: input
+    id: ext-version
+    attributes:
+      label: Extension version
+      placeholder: e.g. 1.2.0
+    validations:
+      required: true
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots or console logs
+      description: Optional, but very helpful.
+    validations:
+      required: false
