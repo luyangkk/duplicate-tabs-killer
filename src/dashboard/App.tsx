@@ -9,6 +9,7 @@ import { groupTabsByDomain, DomainGroup } from '@/utils/grouping';
 import { LayoutGrid, Archive as ArchiveIcon, Search, Globe, Trash2, RotateCcw, X, Settings as SettingsIcon, Images, Copy, Loader2, Check } from 'lucide-react';
 import { closeTabs, TabInfo } from '@/utils/tabs';
 import { DomainPreviewModal } from '@/components/DomainPreviewModal';
+import { viewFromHash, type DashboardView } from '@/dashboard/viewFromHash';
 
 /** Clamps a number within an inclusive range. */
 function clamp(value: number, min: number, max: number) {
@@ -82,7 +83,7 @@ function App() {
   const { archivedTabs, archivedUrlSet, loading: archivedTabsLoading, archiveTab, removeArchivedTab, restoreTab } = useArchivedTabs();
   const { theme, setTheme } = useTheme();
 
-  const [activeTab, setActiveTab] = useState<'current' | 'archives' | 'settings'>('current');
+  const [activeTab, setActiveTab] = useState<DashboardView>(() => viewFromHash(window.location.hash));
   const [searchQuery, setSearchQuery] = useState('');
   const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
   const [archiveName, setArchiveName] = useState('');
@@ -308,6 +309,13 @@ function App() {
     return () => {
       if (successToastTimerRef.current) window.clearTimeout(successToastTimerRef.current);
     };
+  }, []);
+
+  /** Listens for URL hash changes and maps them to the active view (used when popup focuses an already-open dashboard). */
+  useEffect(() => {
+    const onHashChange = () => setActiveTab(viewFromHash(window.location.hash));
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
   }, []);
 
   useEffect(() => {
