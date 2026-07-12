@@ -1,5 +1,9 @@
 # Duplicate Tabs Killer
 
+[![CI](https://github.com/luyangkk/duplicate-tabs-killer/actions/workflows/ci.yml/badge.svg)](https://github.com/luyangkk/duplicate-tabs-killer/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/luyangkk/duplicate-tabs-killer)](https://github.com/luyangkk/duplicate-tabs-killer/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 **Kill duplicates. Archive sessions. Stay organized.**
 
 Duplicate Tabs Killer is a Chrome extension that detects and closes duplicate tabs, groups all open tabs by domain, captures screenshot previews, and lets you archive entire sessions for later — all without leaving the browser.
